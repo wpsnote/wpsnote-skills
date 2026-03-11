@@ -12,6 +12,7 @@
 - **内容编辑** — 段落替换、内容插入、批量删除、属性更新、图片插入
 - **批量操作** — 原子事务支持，多个编辑操作一次提交，全部成功或全部回滚
 - **笔记管理** — 创建、删除、同步、标签管理、使用统计
+- **CLI 工具** — `wpsnote-cli` 命令行工具，将 MCP 工具封装为 shell 命令，支持脚本自动化
 
 ## 项目结构
 
@@ -20,6 +21,7 @@ wps-note/
   SKILL.md                       # 技能定义（触发条件、工作流、工具速查）
   references/
     API_REFERENCE.md             # 全部 MCP 工具的完整 inputSchema
+    CLI_REFERENCE.md             # wpsnote-cli 命令行工具参考
     ERROR_CODES.md               # 错误码详情、hints 系统与恢复策略
     USE_CASES.md                 # 按复杂度递进的用例集与 Prompt 模板
 ```

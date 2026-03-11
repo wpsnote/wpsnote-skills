@@ -423,5 +423,6 @@ read_section({ note_id: "note_xyz", heading_block_id: "h1abc", max_blocks: 5 })
 ## 参考文档
 
 - [API 参考](references/API_REFERENCE.md)——全部工具的完整 inputSchema
+- [CLI 参考](references/CLI_REFERENCE.md)——`wpsnote-cli` 命令行工具的完整命令、参数和使用示例
 - [错误码](references/ERROR_CODES.md)——详细错误码、hints 系统和恢复模式
 - [用例手册](references/USE_CASES.md)——按复杂度递进的完整用例集（含端到端工作流示例）、Prompt 模板和异常处理速查
