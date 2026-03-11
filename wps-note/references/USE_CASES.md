@@ -297,7 +297,33 @@ edit_block({ ..., op: "update_attrs", attrs: { checked: true } })
 
 ---
 
-#### UC-W06：插入图片
+#### UC-W06：AI 生成图片并插入
+
+**场景**：为笔记生成一张配图。
+
+**Prompt**：`"帮我生成一张系统架构图，插到这段描述后面"`
+
+**调用**：
+```
+1. generate_image({ prompt: "系统架构图，展示前端、API网关和微服务集群的关系，简洁线条风格" })
+   → { image_url: "https://...", task_id: "t_abc", width: 2688, height: 1536 }
+2. insert_image({ note_id: "<id>", anchor_id: "<paragraph_id>", position: "after", src: "<image_url>", alt: "系统架构图" })
+   → { block_id: "new_img_id", dimensions: { width, height } }
+```
+
+**验证**：
+- [ ] `generate_image` 返回有效的 `image_url`
+- [ ] `insert_image` 成功插入图片
+- [ ] 图片出现在指定位置
+
+**边界**：
+- 速率限制——每分钟 1 次，超限返回 `RATE_LIMITED`
+- 内容违规——返回 `GENERATE_IMAGE_FAILED`
+- Prompt 超 500 字符——返回 `GENERATE_IMAGE_FAILED`
+
+---
+
+#### UC-W07：插入已有图片
 
 **场景**：在笔记中某段文字后面插入一张图片。
 
@@ -327,7 +353,7 @@ insert_image({
 
 ---
 
-#### UC-W07：原子化批量编辑
+#### UC-W08：原子化批量编辑
 
 **场景**：同时执行多个编辑操作。
 

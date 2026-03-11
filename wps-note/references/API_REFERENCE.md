@@ -23,7 +23,7 @@ interface MCPStandardResult<T = any> {
 
 ---
 
-## 读取工具（7 个）
+## 读取工具
 
 ### get_note_outline
 
@@ -181,7 +181,21 @@ interface MCPStandardResult<T = any> {
 
 ---
 
-## 写入工具（3 个）
+### get_xml_reference
+
+获取 XML 格式完整参考文档，包含所有标签、属性、子节点结构和写入示例。首次编辑笔记前建议调用，尤其在 MCP Server Instructions 未自动注入 XML 参考时。
+
+```json
+{}
+```
+
+无参数。
+
+**返回** `data`：结构化的 XML 格式参考文档文本，包含块级标签、行内标签、属性说明、颜色预设值和写入示例。
+
+---
+
+## 写入工具
 
 ### edit_block
 
@@ -246,7 +260,39 @@ interface MCPStandardResult<T = any> {
 
 ---
 
-## 管理工具（10 个）
+### generate_image
+
+根据文字描述生成一张图片，返回图片 URL。生成后可使用 `insert_image` 将图片插入笔记。适用于创意配图、场景可视化、概念设计等。注意：每用户每分钟限 1 次，生成耗时约 30-120 秒。
+
+```json
+{
+  "prompt": { "type": "string", "required": true, "description": "图片描述（中英文均可）。描述越具体效果越好，建议包含：主体、风格、色调、构图。例如：'一只橘猫坐在窗台上，水彩画风格，暖色调'。限 500 字符以内" },
+  "width": { "type": "integer", "description": "图片宽度（像素）。横版推荐 2688，竖版推荐 1536，正方形推荐 2048。默认 2688" },
+  "height": { "type": "integer", "description": "图片高度（像素）。横版推荐 1536，竖版推荐 2688，正方形推荐 2048。默认 1536" }
+}
+```
+
+**返回** `data`：
+```json
+{
+  "image_url": "https://...",
+  "task_id": "t_abc123",
+  "prompt": "原始 prompt",
+  "width": 2688,
+  "height": 1536
+}
+```
+
+**错误场景**：
+- 速率限制（每分钟 1 次） → `RATE_LIMITED`（retryable，等待 60 秒）
+- Prompt 内容违规 → `GENERATE_IMAGE_FAILED`（修改 prompt 后重试）
+- Prompt 过长（>500 字符） → `GENERATE_IMAGE_FAILED`（缩短 prompt）
+- 白名单未授权 → `GENERATE_IMAGE_FAILED`（联系管理员）
+- 用户未登录 → `GENERATE_IMAGE_FAILED`（登录后重试）
+
+---
+
+## 管理工具
 
 ### list_notes
 

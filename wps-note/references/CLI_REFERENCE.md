@@ -21,7 +21,7 @@
 | `status` | 检查与 MCP 服务的连接状态，显示服务地址和可用工具数量 |
 | `schema` | 输出全部命令的 JSON Schema 描述（供 AI 使用） |
 
-### 读取命令（8 个）
+### 读取命令
 
 | CLI 命令 | MCP 工具 | 说明 |
 |----------|----------|------|
@@ -33,8 +33,9 @@
 | `search` | `search_note_content` | 在笔记内搜索文本 |
 | `read-image` | `read_image` | 读取图片（CLI 返回本地文件路径） |
 | `audio` | `get_audio_transcript` | 获取语音转写文本 |
+| `get-xml-reference` | `get_xml_reference` | 获取 XML 格式参考文档（通过 Fallback 机制调用） |
 
-### 管理命令（8 个）
+### 管理命令
 
 | CLI 命令 | MCP 工具 | 说明 |
 |----------|----------|------|
@@ -47,15 +48,16 @@
 | `delete` | `delete_note` | 删除笔记（不可恢复） |
 | `stats` | `get_note_stats` | 获取笔记使用统计 |
 
-### 编辑命令（3 个）
+### 编辑命令
 
 | CLI 命令 | MCP 工具 | 说明 |
 |----------|----------|------|
 | `edit` | `edit_block` | 编辑 block（replace/insert/delete/update_attrs） |
 | `batch-edit` | `batch_edit` | 批量原子编辑 |
 | `insert-image` | `insert_image` | 插入图片 |
+| `generate-image` | `generate_image` | AI 文生图，返回图片 URL |
 
-### 调试命令（1 个）
+### 调试命令
 
 | CLI 命令 | MCP 工具 | 说明 |
 |----------|----------|------|
@@ -166,6 +168,20 @@ wpsnote-cli insert-image --note_id <id> --anchor_id <bid> --position after --src
 
 # 通过文件插入大图片
 wpsnote-cli insert-image --note_id <id> --anchor_id <bid> --position after --src_file /path/to/base64.txt
+```
+
+### AI 文生图
+
+```bash
+# 生成图片（返回图片 URL）
+wpsnote-cli generate-image --prompt "一只橘猫坐在窗台上，水彩画风格，暖色调"
+
+# 指定尺寸（竖版）
+wpsnote-cli generate-image --prompt "山水画" --width 1536 --height 2688
+
+# 生成并插入笔记（组合使用）
+IMG_URL=$(wpsnote-cli generate-image --prompt "系统架构图" --json | jq -r '.data.image_url')
+wpsnote-cli insert-image --note_id <id> --anchor_id <bid> --position after --src "$IMG_URL"
 ```
 
 ### 脚本自动化
