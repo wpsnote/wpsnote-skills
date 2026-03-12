@@ -169,6 +169,31 @@ read_section({ note_id: "<id>", heading_block_id: "<heading_id>" })
 
 ---
 
+#### UC-R09：续读截断章节
+
+**场景**：一个超大章节（>50 blocks），`read_section` 默认截断在 50 块。
+
+**Prompt**：`"读一下'详细设计'这一章，内容很多"`
+
+**调用**：
+```
+1. read_section({ note_id: "<id>", heading_block_id: "<heading_id>" })
+   → { heading: "详细设计", blocks: [...50个...],
+       truncated: true, next_block_offset: 50 }
+2. read_section({ note_id: "<id>", heading_block_id: "<heading_id>", block_offset: 50 })
+   → { heading: "详细设计", blocks: [...剩余blocks...],
+       truncated: false }
+```
+
+**验证**：
+- [ ] 首次调用返回 `truncated: true` 和 `next_block_offset`
+- [ ] 传入 `block_offset` 后从截断处续读
+- [ ] 续读结果不包含已读取过的 block
+- [ ] 最终 `truncated: false` 表示章节读完
+
+**边界**：
+- `block_offset` 超过章节 block 数——返回空 blocks，`truncated: false`
+- 配合 `max_blocks: 20` 使用——每次最多 20 块，多次续读
 #### UC-R08：获取当前光标所在 block
 
 **场景**：用户正在编辑当前打开的笔记，希望围绕光标位置继续插入或替换。
@@ -206,6 +231,64 @@ get_xml_reference()
 **验证**：
 - [ ] 返回 `reference` 字段
 - [ ] 内容包含块级标签、行内标签、属性说明和写入示例
+
+---
+
+#### UC-R10：分页读取超大文档
+
+**场景**：一篇没有标题结构的超长文档（如导入的会议记录、流水日志），需要完整读取。
+
+**Prompt**：`"帮我看看这篇很长的会议记录"`
+
+**调用**：
+```
+1. read_note({ note_id: "<id>" })
+   → { content: "...(前100块)...",
+       pagination: { offset: 0, limit: 100, total_blocks: 350,
+                     returned_blocks: 100, has_more: true, next_offset: 100 } }
+2. read_note({ note_id: "<id>", offset: 100 })
+   → { content: "...(101-200块)...",
+       pagination: { offset: 100, has_more: true, next_offset: 200 } }
+3. read_note({ note_id: "<id>", offset: 200 })
+   → { content: "...(201-300块)...",
+       pagination: { offset: 200, has_more: true, next_offset: 300 } }
+4. read_note({ note_id: "<id>", offset: 300 })
+   → { content: "...(301-350块)...",
+       pagination: { offset: 300, has_more: false } }
+```
+
+**验证**：
+- [ ] 首次调用无需额外参数，超大文档自动分页
+- [ ] `pagination` 包含 `total_blocks` 和 `next_offset`
+- [ ] 逐页读取直到 `has_more: false`
+- [ ] 每页 block 的 `id` 属性可直接用于后续编辑操作
+
+**边界**：
+- `offset` 超过 `total_blocks`——返回空 content，`has_more: false`
+- 手动指定 `block_limit: 50`——每页返回 50 块
+- 小文档（<=200 blocks）——一次返回全部，`has_more: false`
+
+---
+
+#### UC-R11：分页获取超大文档大纲
+
+**场景**：超大文档（>200 blocks）需要获取 block_id 列表用于编辑，但一次性返回全部 blocks 会占用大量上下文。
+
+**Prompt**：`"这篇长文档有哪些章节？我想编辑第三章"`
+
+**调用**：
+```
+1. get_note_outline({ note_id: "<id>" })
+   → { blocks: [...前100个...], pagination: { total_blocks: 350, has_more: true, next_offset: 100 } }
+2. get_note_outline({ note_id: "<id>", offset: 100 })
+   → { blocks: [...101-200...], pagination: { has_more: true, next_offset: 200 } }
+3. 或结合 search_note_content 精准定位目标 block
+```
+
+**验证**：
+- [ ] 首次调用无需额外参数，超大文档自动分页
+- [ ] `pagination` 包含 `total_blocks` 和 `next_offset`
+- [ ] 可用 `offset`、`block_limit` 手动控制范围
 
 ---
 

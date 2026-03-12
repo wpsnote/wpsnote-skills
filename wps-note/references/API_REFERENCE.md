@@ -27,14 +27,16 @@ interface MCPStandardResult<T = any> {
 
 ### get_note_outline
 
-获取笔记结构化大纲。返回 title、word_count、block_count 和 blocks 列表（每个 block 含 id、type、preview、attrs）——这是获取有效 block_id 的主要方式，后续所有读取和编辑操作都依赖 block_id。
+获取笔记结构化大纲。返回 title、word_count、block_count、estimated_xml_chars、size_category 和 blocks 列表（每个 block 含 id、type、preview、attrs）——这是获取有效 block_id 和判断文档规模的主要方式，后续所有读取和编辑操作都依赖 block_id。超大文档（>200 blocks）自动分页，返回 pagination（含 has_more、next_offset）。
 
 ```json
 {
   "note_id": { "type": "string", "required": true, "description": "笔记 ID" },
   "max_depth": { "type": "number", "description": "大纲最大层级深度，默认不限制" },
   "include_preview": { "type": "boolean", "description": "是否包含文本预览，默认 true" },
-  "preview_length": { "type": "number", "description": "预览文本长度，默认 50" }
+  "preview_length": { "type": "number", "description": "预览文本长度，默认 50" },
+  "offset": { "type": "number", "description": "从第几个 block 开始（0-based），默认 0。has_more 时用 next_offset 续读" },
+  "block_limit": { "type": "number", "description": "单次最多返回的 block 数量。不指定时返回全部（小文档），超大文档自动分页（每页 100）" }
 }
 ```
 
@@ -44,12 +46,17 @@ interface MCPStandardResult<T = any> {
   "title": "2025年度工作总结",
   "word_count": 8520,
   "block_count": 45,
+  "estimated_xml_chars": 13230,
+  "size_category": "medium",
   "blocks": [
     { "id": "aB3kLm9xZq", "type": "heading", "depth": 0, "preview": "第一章 项目进展", "word_count": 0, "children_count": 0, "attrs": { "level": 1 } },
     { "id": "xY7nPq2wRt", "type": "paragraph", "depth": 0, "preview": "本季度完成了三个核心项目...", "word_count": 156, "children_count": 0 }
-  ]
+  ],
+  "pagination": { "offset": 0, "limit": 100, "total_blocks": 350, "returned_blocks": 100, "has_more": true, "next_offset": 100 }
 }
 ```
+
+分页说明：文档超过 200 blocks 时自动分页；`has_more: true` 时使用 `next_offset` 续读：`get_note_outline({ note_id, offset: next_offset })`。
 
 ---
 
@@ -78,12 +85,14 @@ interface MCPStandardResult<T = any> {
 
 ### read_note
 
-读取笔记全文（XML 格式），每个块级标签通过 `id` 属性标识 block_id。返回 title、word_count、content 和 truncated 标记。大文档建议用 `get_note_outline` + `read_section` 分段读取。
+读取笔记全文或分页读取（XML 格式），每个块级标签通过 `id` 属性标识 block_id。返回 title、word_count、content、truncated 和 pagination 分页信息。超大文档（>200 blocks）自动分页。
 
 ```json
 {
   "note_id": { "type": "string", "required": true, "description": "笔记 ID" },
-  "max_length": { "type": "number", "description": "最大返回字符数，默认不限制" }
+  "max_length": { "type": "number", "description": "最大返回字符数，默认不限制" },
+  "offset": { "type": "number", "description": "从第几个 block 开始读取（0-based），默认 0" },
+  "block_limit": { "type": "number", "description": "单次最多读取的 block 数量，超大文档未指定时自动分页（每页 100 blocks）" }
 }
 ```
 
@@ -93,9 +102,24 @@ interface MCPStandardResult<T = any> {
   "title": "我的笔记",
   "word_count": 2400,
   "content": "<h1 id=\"aB3kLm9xZq\">第一章</h1>\n\n<p id=\"xY7nPq2wRt\">段落文本...</p>",
-  "truncated": false
+  "truncated": true,
+  "pagination": {
+    "offset": 0,
+    "limit": 100,
+    "total_blocks": 350,
+    "returned_blocks": 100,
+    "has_more": true,
+    "next_offset": 100
+  }
 }
 ```
+
+**分页说明**：
+- 文档超过 200 blocks 时自动分页（每页 100 blocks），无需额外参数
+- `has_more: true` 时使用 `next_offset` 继续读取：`read_note({ note_id, offset: 100 })`
+- 手动控制：`offset: 50, block_limit: 30` → 读取第 50–79 个 block
+- `offset >= total_blocks` → 返回空 content，`has_more: false`
+- 小文档（<=200 blocks）不传新参数时行为与原来完全一致
 
 ---
 
@@ -117,18 +141,31 @@ interface MCPStandardResult<T = any> {
 
 ### read_section
 
-读取由标题定义的完整章节（从标题 block 到下一个同级或更高级标题的所有 block）。`heading_block_id` 必须指向 heading 类型的 block，否则报 `INVALID_BLOCK_TYPE`。
+读取由标题定义的完整章节（从标题 block 到下一个同级或更高级标题的所有 block）。`heading_block_id` 必须指向 heading 类型的 block，否则报 `INVALID_BLOCK_TYPE`。章节过大被截断时，返回 `next_block_offset` 用于续读。
 
 ```json
 {
   "note_id": { "type": "string", "required": true, "description": "笔记 ID" },
   "heading_block_id": { "type": "string", "required": true, "description": "标题 block ID" },
   "max_blocks": { "type": "number", "description": "最大读取 block 数量，默认 50" },
-  "include_subsections": { "type": "boolean", "description": "是否包含子标题下内容，默认 true" }
+  "include_subsections": { "type": "boolean", "description": "是否包含子标题下内容，默认 true" },
+  "block_offset": { "type": "number", "description": "章节内 block 偏移量（0-based），用于续读截断章节。首次不传，截断时返回 next_block_offset" }
 }
 ```
 
-**返回** `data`：章节的 XML 内容。
+**返回** `data`：
+```json
+{
+  "heading": "技术方案",
+  "level": 2,
+  "blocks": [{ "id": "...", "type": "paragraph", "content": "<p>...</p>", "attrs": {} }],
+  "truncated": true,
+  "next_block_offset": 50
+}
+```
+
+- `truncated: true` 且 `next_block_offset` 存在时，使用 `read_section({ ..., block_offset: 50 })` 续读
+- `truncated: false` 时章节已完整返回
 
 ---
 
@@ -397,7 +434,7 @@ interface MCPStandardResult<T = any> {
 
 ### get_current_note
 
-获取当前正在编辑的笔记的 ID 和元数据。若用户未打开笔记则返回错误。
+获取当前正在编辑的笔记的 ID、元数据和文档统计（word_count、block_count、size_category、estimated_xml_chars）。若用户未打开笔记则返回错误。大文档时根据 size_category 决定后续读取策略。
 
 ```json
 {}
@@ -405,7 +442,24 @@ interface MCPStandardResult<T = any> {
 
 无参数。
 
-**返回** `data`：当前笔记的元数据（同 `get_note_info` 返回格式）。
+**返回** `data`：
+```json
+{
+  "note_id": "abc123",
+  "title": "项目方案",
+  "create_time": "2024-01-01T00:00:00.000Z",
+  "update_time": "2024-06-15T10:30:00.000Z",
+  "link_id": "link-abc",
+  "intro": "本文档描述了...",
+  "tags": [{ "id": "t1", "name": "工作" }],
+  "word_count": 52000,
+  "block_count": 980,
+  "estimated_xml_chars": 74200,
+  "size_category": "large"
+}
+```
+
+`size_category` 取值：`small`（<5K 字）、`medium`（5K-20K）、`large`（20K-80K）、`very_large`（>80K）。large/very_large 时 hints 会建议使用 `search_note_content` 精准定位；`get_note_outline` 支持分页（offset/block_limit），可按需获取结构。
 
 ---
 
