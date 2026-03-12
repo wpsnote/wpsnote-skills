@@ -191,7 +191,12 @@ interface MCPStandardResult<T = any> {
 
 无参数。
 
-**返回** `data`：结构化的 XML 格式参考文档文本，包含块级标签、行内标签、属性说明、颜色预设值和写入示例。
+**返回** `data`：
+```json
+{
+  "reference": "=== XML Format Reference ===\n..."
+}
+```
 
 ---
 
@@ -244,7 +249,7 @@ interface MCPStandardResult<T = any> {
 
 ### insert_image
 
-在笔记中指定位置插入图片（图片不可通过 XML 创建，必须用此工具）。支持 base64 data URI 和 HTTP/HTTPS URL。本地文件请先读取并转为 base64 data URI 再传入。返回 block_id 和图片尺寸 { width, height }。
+在笔记中指定位置插入图片（图片不可通过 XML 创建，必须用此工具）。当前走在线上传，调用时需联网。支持 base64 data URI 和 HTTP/HTTPS URL。本地文件请先读取并转为 base64 data URI 再传入。返回 block_id 和图片尺寸 { width, height }。
 
 ```json
 {
@@ -401,6 +406,31 @@ interface MCPStandardResult<T = any> {
 无参数。
 
 **返回** `data`：当前笔记的元数据（同 `get_note_info` 返回格式）。
+
+---
+
+### get_cursor_block
+
+获取当前光标所在的顶层 block 信息，适合围绕当前编辑位置进行插入、替换等操作。返回 `block_id`、`block_type` 和 `note_id`。若光标位于高亮块（subdoc）或分栏（columns）内部，返回不支持错误。
+
+```json
+{}
+```
+
+无参数。
+
+**返回** `data`：
+```json
+{
+  "block_id": "aB3kLm9xZq",
+  "block_type": "paragraph",
+  "note_id": "note_abc123"
+}
+```
+
+**错误场景**：
+- 光标位于高亮块或分栏内部 → 当前会返回 `INTERNAL_ERROR`，message 包含 `UNSUPPORTED_POSITION`
+- 当前无打开的笔记 → `NO_ACTIVE_EDITOR_WINDOW`
 
 ---
 
@@ -574,4 +604,3 @@ interface MCPStandardResult<T = any> {
 **支持的属性**：`heading.level`、`heading.textAlign`、`paragraph.textAlign`、`code_block.language`、`todo.checked`。
 
 **返回** `data`：`{ success, block_id, message? }`。
-

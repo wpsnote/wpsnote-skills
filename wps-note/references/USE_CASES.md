@@ -169,6 +169,46 @@ read_section({ note_id: "<id>", heading_block_id: "<heading_id>" })
 
 ---
 
+#### UC-R08：获取当前光标所在 block
+
+**场景**：用户正在编辑当前打开的笔记，希望围绕光标位置继续插入或替换。
+
+**Prompt**：`"我现在光标停在哪一段？"`
+
+**调用**：
+```
+get_cursor_block()
+```
+
+**验证**：
+- [ ] 返回 `block_id`
+- [ ] 返回 `block_type`
+- [ ] 返回 `note_id`
+
+**边界**：
+- 光标位于高亮块（subdoc）内部——返回不支持错误
+- 光标位于分栏（columns）内部——返回不支持错误
+- 当前无打开的笔记——返回 `NO_ACTIVE_EDITOR_WINDOW`
+
+---
+
+#### UC-R09：获取 XML 格式参考
+
+**场景**：首次编辑前，希望拿到完整 XML 标签与属性说明。
+
+**Prompt**：`"给我一份 WPS Note XML 写入格式参考"`
+
+**调用**：
+```
+get_xml_reference()
+```
+
+**验证**：
+- [ ] 返回 `reference` 字段
+- [ ] 内容包含块级标签、行内标签、属性说明和写入示例
+
+---
+
 ### 1.2 写入工具
 
 #### UC-W01：替换段落内容
@@ -238,6 +278,7 @@ edit_block({
 
 **验证**：
 - [ ] 返回 `new_block_ids` 数组
+- [ ] 返回 `last_block_id`，可直接用于链式插入
 - [ ] 新 block 位于锚点之后
 - [ ] 标题层级正确
 
@@ -245,6 +286,7 @@ edit_block({
 - `position: "before"`——插入到锚点前面
 - 插入多段内容（含多个 block）——产生多个新 block ID
 - 在文档末尾 block 后插入——正常追加
+- content 可包含多个块级元素（如 `"<h2>...</h2><p>...</p>"`），按 XML 顺序插入，无需分多次调用
 
 ---
 
@@ -348,7 +390,7 @@ insert_image({
 
 **边界**：
 - `src` 为 base64 data URI——正常插入
-- `src` 为本地文件路径——仅 Electron 环境下可用
+- `src` 为本地文件路径——当前不支持直接传入，需先转为 base64 data URI
 - 通过 XML（`<img/>`）创建图片——被拒绝，必须使用 `insert_image`
 
 ---
@@ -472,7 +514,26 @@ get_note_info({ note_id: "nr_d1" })
 
 ---
 
-#### UC-M05：删除笔记（高危）
+#### UC-M05：获取当前光标位置
+
+**Prompt**：`"告诉我当前正在编辑的位置"`
+
+**调用**：
+```
+get_cursor_block()
+```
+
+**验证**：
+- [ ] 返回当前笔记 `note_id`
+- [ ] 返回当前 block 的 `block_id`
+- [ ] 返回当前 block 的 `block_type`
+
+**边界**：
+- 光标位于高亮块/分栏内部——返回不支持错误
+
+---
+
+#### UC-M06：删除笔记（高危）
 
 **Prompt**：`"删掉那篇过期的草稿"`
 
@@ -491,7 +552,7 @@ delete_note({ note_id: "<id>" })
 
 ---
 
-#### UC-M06：同步与诊断
+#### UC-M07：同步与诊断
 
 **Prompt**：`"同步一下这篇笔记" / "看看最近的调用日志"`
 
@@ -557,8 +618,10 @@ get_mcp_logs({ limit: 20 })
 2. read_blocks({ note_id, block_ids: [target_id] })
    → 确认当前内容
 3. edit_block({ note_id, op: "replace", block_id: target_id, content: "<p>更新后的内容</p>" })
-   → 执行修改
-4. read_blocks({ note_id, block_ids: [new_block_id] })
+   → 执行修改（返回 hints 提示刷新 outline）
+4. get_note_outline({ note_id })
+   → 获取新的 block_id
+5. read_blocks({ note_id, block_ids: [new_block_id] })
    → 验证修改结果（注意 block_id 可能已变化）
 ```
 
@@ -589,7 +652,7 @@ get_mcp_logs({ limit: 20 })
    → { success: true }
 ```
 
-**关键模式**：`create_note` 创建空白笔记。使用 `batch_edit` 的 replace + insert 组合在一次原子操作中填充内容。
+**关键模式**：`create_note` 创建空白笔记。使用 `batch_edit` 的 replace + insert 组合在一次原子操作中填充内容。单次 insert 的 content 可包含多个块级元素（如上例的 4 个 `<h2>` + `<p>` 对），按 XML 顺序依次插入，无需分多次调用。
 
 **验证**：
 - [ ] 新笔记创建成功
@@ -1069,4 +1132,3 @@ get_mcp_logs({ limit: 20 })
 - [ ] 代码块均标注了语言
 - [ ] 段落对齐统一为左对齐
 - [ ] 文本内容未变化
-

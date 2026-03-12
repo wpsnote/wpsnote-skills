@@ -77,6 +77,14 @@
 |----------|----------|------|
 | `logs` | `get_mcp_logs` | 查看 MCP 调试日志 |
 
+### Fallback-only 工具
+
+以下工具当前没有显式注册到 `wpsnote-cli --help` / `schema` 的 canonical 命令面，但可以通过 fallback 直接调用：
+
+| CLI 命令 | MCP 工具 | 说明 |
+|----------|----------|------|
+| `get-cursor-block` | `get_cursor_block` | 获取当前光标所在顶层 block 的 `block_id`、`block_type` 和 `note_id` |
+
 ## CLI 特有行为
 
 与 MCP 工具调用相比，CLI 有以下差异：
@@ -126,6 +134,9 @@ wpsnote-cli gen-image --prompt "系统架构图"
 
 # fallback alias，等同于调用 MCP 工具 generate_image
 wpsnote-cli generate-image --prompt "系统架构图"
+
+# fallback-only 工具，当前无 canonical alias
+wpsnote-cli get-cursor-block --json
 ```
 
 ## 使用示例
@@ -153,6 +164,9 @@ wpsnote-cli read --note_id <id>
 
 # 获取大纲
 wpsnote-cli outline --note_id <id>
+
+# 获取当前光标所在 block（fallback-only）
+wpsnote-cli get-cursor-block --json
 
 # 读取章节
 wpsnote-cli section --note_id <id> --heading_block_id <block_id>
