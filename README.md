@@ -292,15 +292,7 @@ version: 1.0.0
 
 <!-- 如果你贡献了 Skill，欢迎通过 PR 把自己加到这里 -->
 
-| 贡献者 | Skill |
-|--------|-------|
-| [gaotianxiang](https://github.com/gaotianxiang) | `wps-note` · `literature-reader` · `tag-organize` · `skill-creator` · `wpsnote-beautifier` |
-| [KevinYoung-Kw](https://github.com/KevinYoung-Kw) | `content/content-creator` · `content/wechat-publisher` · `search/wps-note-intelligent-search` |
-| [Mellow](https://github.com/mellowrsa) | `search/news-to-note` |
-| [lee](https://github.com/liminwanqing) | `capture/coding-assistant` |
-| [loki2046-mao](https://github.com/loki2046-mao) | `learning/` 系列全部 · `insight-engine/ie-recall-memory` |
-| [songjialiang](https://github.com/songjialiang) | `insight-engine/ie-engine` · `insight-engine/ie-connect-dots` · `insight-engine/ie-retrieve-memory` · `insight-engine/ie-generate-insight` |
-| [itshen](https://github.com/itshen) | `capture/note-copilot` · `capture/live-transcript-summary` · `capture/doc-importer` · 仓库整理与维护 |
+<a href="https://github.com/gaotianxiang" title="gaotianxiang"><img src="https://github.com/gaotianxiang.png?size=64" width="48" height="48" hspace="4" alt="@gaotianxiang"/></a><a href="https://github.com/itshen" title="itshen"><img src="https://github.com/itshen.png?size=64" width="48" height="48" hspace="4" alt="@itshen"/></a><a href="https://github.com/loki2046-mao" title="loki2046-mao"><img src="https://github.com/loki2046-mao.png?size=64" width="48" height="48" hspace="4" alt="@loki2046-mao"/></a><a href="https://github.com/KevinYoung-Kw" title="KevinYoung-Kw"><img src="https://github.com/KevinYoung-Kw.png?size=64" width="48" height="48" hspace="4" alt="@KevinYoung-Kw"/></a><a href="https://github.com/liminwanqing" title="liminwanqing"><img src="https://github.com/liminwanqing.png?size=64" width="48" height="48" hspace="4" alt="@liminwanqing"/></a><a href="https://github.com/songjialiang" title="songjialiang"><img src="https://github.com/songjialiang.png?size=64" width="48" height="48" hspace="4" alt="@songjialiang"/></a><a href="https://github.com/dengchunlan" title="dengchunlan"><img src="https://github.com/dengchunlan.png?size=64" width="48" height="48" hspace="4" alt="@dengchunlan"/></a><a href="https://github.com/chadyi" title="chadyi"><img src="https://github.com/chadyi.png?size=64" width="48" height="48" hspace="4" alt="@chadyi"/></a><a href="https://github.com/oaeen" title="oaeen"><img src="https://github.com/oaeen.png?size=64" width="48" height="48" hspace="4" alt="@oaeen"/></a><a href="https://github.com/Naruto-mitsubishi" title="Naruto-mitsubishi"><img src="https://github.com/Naruto-mitsubishi.png?size=64" width="48" height="48" hspace="4" alt="@Naruto-mitsubishi"/></a><a href="https://github.com/wps-x" title="wps-x"><img src="https://github.com/wps-x.png?size=64" width="48" height="48" hspace="4" alt="@wps-x"/></a>
 
 ---
 
