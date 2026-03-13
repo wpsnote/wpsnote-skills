@@ -1,34 +1,32 @@
-# WPS Learning Workflow
+# WPS 学习工作流
 
-Use this shared workflow across the suite when the target output is meant for WPS Note.
+这套工作流用于约束整组学习类 Skill 在 WPS 笔记中的协作方式。
 
-## Core principle
+## 核心原则
 
-The suite should not stop at "analysis". It should move the learner one step forward:
+不要停留在“分析一下”。
 
-- from raw material to structured note
-- from note to focus list
-- from confusion to repair plan
-- from note to recall material
-- from isolated idea to connected knowledge
+这组 Skill 的目标应该是把用户往前推进一步：
 
-## Standard WPS flow
+- 从课堂记录推进到结构化笔记
+- 从原始笔记推进到复习重点
+- 从卡壳推进到查漏补缺
+- 从理解偏差推进到修正与自测
+- 从孤立笔记推进到知识网络
 
-1. Locate the current note or the target note.
-2. Search related WPS notes when context matters.
-3. Read only the sections needed to complete the task.
-4. Produce a study-friendly output with obvious headings and short sections.
-5. End with one of:
-   - todo checklist
-   - review sequence
-   - self-test questions
-   - suggested backlinks
-   - next skill to run
-6. Sync the note if it was edited.
+## 标准流程
 
-## Standard output blocks
+1. 课堂记录或原始材料进入 WPS 笔记
+2. 整理成结构化主笔记
+3. 抽取关键知识点和复习重点
+4. 识别易混淆点与误解
+5. 检查前置知识缺口
+6. 关联历史笔记与旧洞见
+7. 生成闪卡、讲解提纲或下一轮复习任务
 
-When relevant, prefer these blocks or sections:
+## 标准输出块
+
+在适合的情况下，优先使用这些学习友好的输出块：
 
 - `30-second summary`
 - `must remember`
@@ -39,31 +37,31 @@ When relevant, prefer these blocks or sections:
 - `self-check`
 - `next review`
 
-## Confidence handling
+## 信息置信度处理
 
-When sources are partial or noisy, separate:
+当来源不完整、课堂记录较乱或 OCR 质量一般时，要分清：
 
 - `Confirmed from notes`
 - `Likely inference`
 - `Still missing`
 
-This avoids overconfident study advice.
+这样可以避免把不确定内容包装成确定知识点。
 
-## Cross-skill routing
+## Skill 串联建议
 
-The suite works best when each skill recommends what should happen next:
+整组 skill 最好形成一个学习闭环，而不是分散使用：
 
 - `class-note-builder` -> `lecture-focus-extractor`
 - `lecture-focus-extractor` -> `notes-to-flashcards`
 - `study-note-linker` -> `insight-recaller`
 - `prerequisite-gap-finder` -> `misconception-finder`
 - `misconception-finder` -> `notes-to-flashcards`
-- `notes-to-flashcards` -> manual or external spaced review
-- `notes-to-lesson-plan` -> self-teach or peer-teach
+- `notes-to-flashcards` -> 进入下一轮复习
+- `notes-to-lesson-plan` -> 用讲给别人听的方式检验掌握程度
 
-## WPS-specific expectations
+## WPS 场景下的额外要求
 
-- Prefer outputs that can be pasted directly into WPS Note without reformatting.
-- Favor short sections over giant paragraphs.
-- Use checklist-style next steps where possible.
-- If old notes are referenced, name them explicitly so the user can search them in WPS.
+- 尽量先复用已有 WPS 笔记，再决定是否新建。
+- 输出要适合在 WPS 里快速扫读，不要堆成长段。
+- 如果引用旧笔记，要明确写出笔记标题，方便检索。
+- 每次输出后，尽量给出下一步动作：待办、复习顺序、自测题或建议继续运行的 skill。
