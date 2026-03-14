@@ -83,6 +83,7 @@ search/                          # 搜索与阅读
 capture/                         # 信息捕获与记录
   live-transcript-summary/       # 实时音频转写监听与自动总结
   doc-importer/                  # 文档导入与格式转换
+  web-importer/                  # 网页无损导入：公众号/通用网页 → WPS 笔记（含图片）
   coding-assistant/              # 编码助手，自动生成技术文档
 
 insight-engine/                  # 灵感引擎：记忆检索、想法连接、洞见生成
@@ -151,6 +152,7 @@ skill-creator/                   # 工具：Skill 创建、迭代与评估
 |-------|------|
 | `live-transcript-summary` | 实时音频转写监听与自动总结，每 60 秒循环一次，适用于会议、听课、播客、采访 |
 | `doc-importer` | 文档导入与格式转换，将外部文档结构化写入 WPS 笔记 |
+| `web-importer` | 网页无损导入，将微信公众号文章或任意网页抓取为结构化笔记，图片按原文位置插入 |
 | `coding-assistant` | 多平台编码助手，自动将核心技术梳理为技术文档，含架构概览、核心代码、调用链等标准模块 |
 
 ---
