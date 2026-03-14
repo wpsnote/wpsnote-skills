@@ -200,7 +200,85 @@ def download_image(img_url, save_path, max_retries=3):
                 return False
     return False
 
-def download_article(title, url, base_dir, max_retries=3, use_history_format=False):
+def _import_to_wps(article_dir: str, article_info: dict, img_dir: str):
+    """
+    将已下载的文章直接导入到 WPS 笔记（高质量模式：保留颜色/粗体/标题格式）。
+    依赖 import_to_wps.py（与本脚本同仓库 doc-importer/scripts/）。
+    """
+    import sys, os
+    # 找到 import_to_wps.py
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    wps_script = os.path.join(this_dir, '..', '..', 'doc-importer', 'scripts', 'import_to_wps.py')
+    if not os.path.exists(wps_script):
+        print(f"   ⚠️  找不到 import_to_wps.py，跳过 WPS 导入")
+        return False
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('import_to_wps', wps_script)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    # 检查 wpsnote-cli 连接
+    if not mod.cli_check():
+        print(f"   ⚠️  wpsnote-cli 未连接，跳过 WPS 导入")
+        return False
+
+    from pathlib import Path
+
+    html_path = Path(article_dir) / '原文.html'
+    img_path  = Path(img_dir)
+    title     = article_info['title']
+    publish_time = article_info.get('publish_time', '')
+
+    # 解析 HTML → segments
+    segments = mod.html_to_segments(html_path, img_path)
+    if not segments:
+        print(f"   ⚠️  html_to_segments 返回空，跳过 WPS 导入")
+        return False
+
+    xml_count = sum(1 for t, _ in segments if t == 'xml')
+    img_count  = sum(1 for t, _ in segments if t == 'img')
+    print(f"   [WPS] 解析完成: {xml_count} 段文字, {img_count} 张图片")
+
+    # 创建笔记
+    note_id = mod.cli_create_note(title)
+    if not note_id:
+        print(f"   ❌ WPS 创建笔记失败")
+        return False
+    mod.cli_sync(note_id)
+    print(f"   [WPS] 创建笔记: {note_id}")
+
+    # 写标题 + 时间行
+    outline_data = mod.cli_get_outline(note_id)
+    blocks = outline_data.get('blocks', [])
+    if not blocks:
+        print(f"   ❌ WPS 无法获取初始 blocks")
+        return False
+    first_id = blocks[0]['id']
+    res = mod.cli_batch_edit(note_id, [
+        {'op': 'replace', 'block_id': first_id, 'content': f'<h1>{title}</h1>'},
+        {'op': 'insert', 'anchor_id': first_id, 'position': 'after',
+         'content': f'<p>{publish_time}</p>' if publish_time else '<p></p>'},
+    ])
+    if res.get('ok') is False:
+        print(f"   ❌ WPS 写标题失败: {res.get('message')}")
+        return False
+
+    # 写正文 + 占位符
+    img_list = mod.write_content_with_placeholders(note_id, segments)
+    print(f"   [WPS] 文字写入完成，{len(img_list)} 个图片占位符")
+
+    # 插图
+    if img_list:
+        ok, fail = mod.find_and_insert_images(note_id, img_list)
+        print(f"   [WPS] 图片插入: {ok}/{len(img_list)}")
+
+    print(f"   ✅ WPS 导入完成：《{title}》")
+    return True
+
+
+def download_article(title, url, base_dir, max_retries=3, use_history_format=False,
+                     import_wps=False):
     """下载单篇文章，支持重试"""
     print(f"\n📄 正在下载: {title}")
     
@@ -321,57 +399,114 @@ def download_article(title, url, base_dir, max_retries=3, use_history_format=Fal
                 # 延迟避免请求过快
                 time.sleep(1.5)
         
-            # 转换为 Markdown 格式（保留图片位置）
-            def convert_to_markdown(element):
-                """递归转换 HTML 元素为 Markdown"""
-                if element.name is None:
-                    # 文本节点
-                    return element.string if element.string else ''
-                
-                if element.name == 'img':
-                    # 图片标签
-                    md_path = element.get('data-md-path')
-                    if md_path:
-                        alt_text = element.get('alt', '图片')
-                        return f"\n\n![{alt_text}]({md_path})\n\n"
-                    return ''
-                
-                # 处理其他标签
-                result = []
-                for child in element.children:
-                    result.append(convert_to_markdown(child))
-                
-                text = ''.join(result)
-                
-                # 根据标签类型添加格式
-                if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                    level = int(element.name[1])
-                    return f"\n\n{'#' * level} {text.strip()}\n\n"
-                elif element.name == 'p':
-                    return f"\n\n{text.strip()}\n\n"
-                elif element.name == 'strong' or element.name == 'b':
-                    return f"**{text}**"
-                elif element.name == 'em' or element.name == 'i':
-                    return f"*{text}*"
-                elif element.name == 'br':
-                    return '\n'
-                elif element.name == 'section':
-                    return text
-                else:
-                    return text
-            
-            # 生成 Markdown 内容
-            md_content = convert_to_markdown(content_div)
-            # 清理多余的空行
-            md_content = re.sub(r'\n{3,}', '\n\n', md_content)
-            article_info['content'] = md_content.strip()
-            
-            # 保存 Markdown 格式（改为"终稿.md"，不包含元信息）
-            md_path = os.path.join(article_dir, '终稿.md')
-            with open(md_path, 'w', encoding='utf-8') as f:
-                f.write(f"{article_info['title']}\n")
-                f.write(md_content)
-            print(f"   ✅ Markdown 已保存（终稿.md）")
+            # ── 转换并保存 ──────────────────────────────────────────────
+            if import_wps:
+                # 高质量模式：直接导入 WPS，保留颜色/粗体/标题格式
+                wps_ok = _import_to_wps(article_dir, article_info, images_dir)
+                if not wps_ok:
+                    print(f"   ⚠️  WPS 导入失败，fallback 保存 Markdown")
+                    import_wps = False  # 降级走 Markdown 路径
+
+            if not import_wps:
+                def is_bold_style(style_str):
+                    """判断 style 属性是否包含加粗"""
+                    if not style_str:
+                        return False
+                    s = style_str.lower().replace(' ', '')
+                    return 'font-weight:bold' in s or 'font-weight:700' in s or 'font-weight:600' in s
+
+                def is_italic_style(style_str):
+                    """判断 style 属性是否包含斜体"""
+                    if not style_str:
+                        return False
+                    s = style_str.lower().replace(' ', '')
+                    return 'font-style:italic' in s
+
+                def convert_to_markdown(element):
+                    """递归转换 HTML 元素为 Markdown"""
+                    if element.name is None:
+                        return element.string if element.string else ''
+
+                    if element.name == 'img':
+                        md_path = element.get('data-md-path')
+                        if md_path:
+                            alt_text = element.get('alt', '图片')
+                            return f"\n\n![{alt_text}]({md_path})\n\n"
+                        return ''
+
+                    result = []
+                    for child in element.children:
+                        result.append(convert_to_markdown(child))
+
+                    text = ''.join(result)
+
+                    if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                        level = int(element.name[1])
+                        return f"\n\n{'#' * level} {text.strip()}\n\n"
+                    elif element.name == 'p':
+                        stripped = text.strip()
+                        if not stripped:
+                            return ''
+                        return f"\n\n{stripped}\n\n"
+                    elif element.name in ['strong', 'b']:
+                        inner = text.strip()
+                        return f"**{inner}**" if inner else ''
+                    elif element.name in ['em', 'i']:
+                        inner = text.strip()
+                        return f"*{inner}*" if inner else ''
+                    elif element.name == 'span':
+                        style = element.get('style', '')
+                        inner = text
+                        if is_bold_style(style) and is_italic_style(style):
+                            stripped = inner.strip()
+                            return f"***{stripped}***" if stripped else ''
+                        elif is_bold_style(style):
+                            stripped = inner.strip()
+                            return f"**{stripped}**" if stripped else inner
+                        elif is_italic_style(style):
+                            stripped = inner.strip()
+                            return f"*{stripped}*" if stripped else inner
+                        return inner
+                    elif element.name == 'a':
+                        href = element.get('href', '')
+                        inner = text.strip()
+                        if href and inner:
+                            return f"[{inner}]({href})"
+                        return inner
+                    elif element.name == 'blockquote':
+                        lines = text.strip().splitlines()
+                        quoted = '\n'.join(f"> {l}" for l in lines if l.strip())
+                        return f"\n\n{quoted}\n\n" if quoted else ''
+                    elif element.name == 'ul':
+                        return f"\n{text}\n"
+                    elif element.name == 'ol':
+                        return f"\n{text}\n"
+                    elif element.name == 'li':
+                        stripped = text.strip()
+                        parent = element.parent
+                        if parent and parent.name == 'ol':
+                            siblings = [s for s in parent.children if getattr(s, 'name', None) == 'li']
+                            idx = siblings.index(element) + 1 if element in siblings else 1
+                            return f"\n{idx}. {stripped}"
+                        else:
+                            return f"\n- {stripped}"
+                    elif element.name == 'br':
+                        return '\n'
+                    elif element.name == 'section':
+                        return text
+                    else:
+                        return text
+
+                # 生成 Markdown 内容
+                md_content = convert_to_markdown(content_div)
+                md_content = re.sub(r'\n{3,}', '\n\n', md_content)
+                article_info['content'] = md_content.strip()
+
+                md_path = os.path.join(article_dir, '终稿.md')
+                with open(md_path, 'w', encoding='utf-8') as f:
+                    f.write(f"{article_info['title']}\n")
+                    f.write(md_content)
+                print(f"   ✅ Markdown 已保存（终稿.md）")
             
             # 保存元数据
             meta_path = os.path.join(article_dir, 'meta.json')
@@ -445,7 +580,7 @@ def download_single_article_from_url(url):
     
     return success
 
-def download_article_from_url(url, base_dir, max_retries=3):
+def download_article_from_url(url, base_dir, max_retries=3, import_wps=False):
     """从URL下载文章（自动提取标题）"""
     print(f"\n📄 正在获取文章信息...")
     
@@ -458,19 +593,41 @@ def download_article_from_url(url, base_dir, max_retries=3):
             print(f"   ❌ 请求失败 (状态码: {response.status_code})")
             return False
         
-        # 解析标题
+        # 解析标题（多重兜底）
         soup = BeautifulSoup(response.text, 'html.parser')
-        title_tag = soup.find('h1', {'class': 'rich_media_title'}) or soup.find('h2', {'class': 'rich_media_title'})
-        
-        if title_tag:
-            title = title_tag.text.strip()
+        title = ""
+
+        # 方案1: og:title meta 标签（最稳定）
+        og_title = soup.find('meta', {'property': 'og:title'})
+        if og_title and og_title.get('content', '').strip():
+            title = og_title['content'].strip()
+
+        # 方案2: js_title_inner span（微信标准结构）
+        if not title:
+            span = soup.find('span', {'class': 'js_title_inner'})
+            if span and span.text.strip():
+                title = span.text.strip()
+
+        # 方案3: rich_media_title h1/h2
+        if not title:
+            title_tag = soup.find('h1', {'class': 'rich_media_title'}) or soup.find('h2', {'class': 'rich_media_title'})
+            if title_tag and title_tag.text.strip():
+                title = title_tag.text.strip()
+
+        # 方案4: 正则从原始 HTML 中提取
+        if not title:
+            m = re.search(r'var\s+msg_title\s*=\s*["\']([^"\']+)["\']', response.text)
+            if m:
+                title = m.group(1).strip()
+
+        if title:
             print(f"   📝 文章标题: {title}")
         else:
             print(f"   ⚠️  未找到标题，使用默认标题")
             title = "未命名文章"
         
         # 调用原有的下载函数
-        return download_article(title, url, base_dir, max_retries)
+        return download_article(title, url, base_dir, max_retries, import_wps=import_wps)
         
     except Exception as e:
         print(f"   ❌ 获取文章信息失败: {str(e)}")
@@ -516,7 +673,7 @@ def batch_download():
     print(f"📁 保存位置: {os.path.abspath(base_dir)}")
     print("=" * 80)
 
-def download_latest_to_history():
+def download_latest_to_history(import_wps=False):
     """下载最新推文到历史推文目录"""
     print("=" * 80)
     print("微信公众号文章下载工具 - 最新推文 → 历史推文")
@@ -534,7 +691,8 @@ def download_latest_to_history():
     for idx, article in enumerate(LATEST_ARTICLES, 1):
         print(f"\n[{idx}/{len(LATEST_ARTICLES)}]", end=" ")
 
-        if download_article(article['title'], article['url'], base_dir, use_history_format=True):
+        if download_article(article['title'], article['url'], base_dir, use_history_format=True,
+                            import_wps=import_wps):
             success_count += 1
         else:
             fail_count += 1
@@ -554,16 +712,23 @@ def download_latest_to_history():
 
 def main():
     """主函数"""
+    import_wps = '--wps' in sys.argv
+
     # 检查 --latest 参数
     if '--latest' in sys.argv:
-        download_latest_to_history()
+        download_latest_to_history(import_wps=import_wps)
         return
 
     # 检查命令行参数
     if len(sys.argv) > 1:
-        # 单链接下载模式
-        url = sys.argv[1]
-        download_single_article_from_url(url)
+        # 单链接下载模式（过滤掉 flag 参数）
+        url = next((a for a in sys.argv[1:] if not a.startswith('--')), None)
+        if url:
+            base_dir = os.path.join(os.path.dirname(__file__), '..', '推文')
+            os.makedirs(base_dir, exist_ok=True)
+            download_article_from_url(url, base_dir, import_wps=import_wps)
+        else:
+            batch_download()
     else:
         # 批量下载模式
         batch_download()

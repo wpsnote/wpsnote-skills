@@ -510,7 +510,92 @@ def html_to_markdown(content_html, image_mapping=None):
     return md
 
 
-def create_output_dir(title, output_root):
+def _load_import_to_wps():
+    """动态加载 import_to_wps 模块（与 web-importer 同仓库）"""
+    import importlib.util
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    wps_script = os.path.join(this_dir, '..', '..', 'doc-importer', 'scripts', 'import_to_wps.py')
+    if not os.path.exists(wps_script):
+        return None
+    spec = importlib.util.spec_from_file_location('import_to_wps', wps_script)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def scrape_url_to_wps(url, title, content_html, metadata, images_dir, output_dir):
+    """
+    高质量模式：将已提取的 HTML 正文直接导入 WPS 笔记，保留颜色/粗体/标题格式。
+    不走 markdownify，直接解析内联样式。
+    """
+    from pathlib import Path
+
+    mod = _load_import_to_wps()
+    if not mod:
+        print("   [WPS] 找不到 import_to_wps.py，请确认目录结构")
+        return False
+    if not mod.cli_check():
+        print("   [WPS] wpsnote-cli 未连接，请运行：wpsnote-cli status")
+        return False
+
+    # 将 content_html 写到临时文件，模拟"原文.html"供 html_to_segments 读取
+    import tempfile
+    tmp_html = Path(tempfile.mktemp(suffix='.html'))
+    tmp_html.write_text(content_html, encoding='utf-8')
+
+    img_path = Path(images_dir) if os.path.isdir(images_dir) else Path(output_dir)
+
+    try:
+        segments = mod.html_to_segments(tmp_html, img_path)
+    finally:
+        tmp_html.unlink(missing_ok=True)
+
+    if not segments:
+        print("   [WPS] segments 为空，跳过 WPS 导入")
+        return False
+
+    xml_count = sum(1 for t, _ in segments if t == 'xml')
+    img_count  = sum(1 for t, _ in segments if t == 'img')
+    print(f"   [WPS] 解析完成: {xml_count} 段文字, {img_count} 张图片")
+
+    # 创建笔记
+    note_id = mod.cli_create_note(title)
+    if not note_id:
+        print("   [WPS] 创建笔记失败")
+        return False
+    mod.cli_sync(note_id)
+    print(f"   [WPS] 创建笔记: {note_id}")
+
+    # 写标题 + 来源信息行
+    outline_data = mod.cli_get_outline(note_id)
+    blocks = outline_data.get('blocks', [])
+    if not blocks:
+        print("   [WPS] 无法获取初始 blocks")
+        return False
+
+    first_id = blocks[0]['id']
+    publish_time = metadata.get('publish_time', '')
+    source_line = publish_time if publish_time else metadata.get('domain', url)
+
+    res = mod.cli_batch_edit(note_id, [
+        {'op': 'replace', 'block_id': first_id, 'content': f'<h1>{title}</h1>'},
+        {'op': 'insert', 'anchor_id': first_id, 'position': 'after',
+         'content': f'<p>{source_line} | <a href="{url}">原文链接</a></p>'},
+    ])
+    if res.get('ok') is False:
+        print(f"   [WPS] 写标题失败: {res.get('message')}")
+        return False
+
+    # 写正文 + 图片
+    img_list = mod.write_content_with_placeholders(note_id, segments)
+    print(f"   [WPS] 文字写入完成，{len(img_list)} 个图片占位符")
+
+    if img_list:
+        ok, fail = mod.find_and_insert_images(note_id, img_list)
+        print(f"   [WPS] 图片插入: {ok}/{len(img_list)}")
+
+    print(f"   ✅ WPS 导入完成：《{title}》")
+    return True
     """创建输出目录"""
     timestamp = datetime.datetime.now().strftime('%Y%m%d')
     # 使用 日期_标题关键词 作为目录名
@@ -524,7 +609,8 @@ def create_output_dir(title, output_root):
 # 主流程
 # ============================================================
 
-def scrape_url(url, output_root=None, custom_dir_name=None, filter_level=FILTER_LEVEL_AGGRESSIVE):
+def scrape_url(url, output_root=None, custom_dir_name=None,
+               filter_level=FILTER_LEVEL_AGGRESSIVE, import_wps=False):
     """
     爬取指定 URL 的网页内容并保存为 Markdown
 
@@ -587,7 +673,25 @@ def scrape_url(url, output_root=None, custom_dir_name=None, filter_level=FILTER_
     # 5. 处理图片
     image_mapping, content_html = process_images(content_html, url, images_dir)
 
-    # 6. 转换为 Markdown
+    # ── 分叉：WPS 高质量模式 or 传统 Markdown 模式 ──────────────────────
+    if import_wps:
+        print(f"\n   [WPS] 启用高质量导入模式（保留颜色/格式）...")
+        wps_ok = scrape_url_to_wps(
+            url=url, title=title, content_html=content_html,
+            metadata=metadata, images_dir=images_dir, output_dir=output_dir,
+        )
+        if wps_ok:
+            print(f"\n{'=' * 70}")
+            print(f"  导入完成（WPS 高质量模式）!")
+            print(f"{'=' * 70}")
+            print(f"  标题: {title}")
+            print(f"  原始 HTML 备份: {os.path.abspath(output_dir)}/original.html")
+            print(f"{'=' * 70}")
+            return True
+        else:
+            print(f"   [WPS] 导入失败，降级为 Markdown 模式")
+
+    # 6. 转换为 Markdown（传统模式）
     print(f"\n   [转换] 正在转换为 Markdown...")
     md_content = html_to_markdown(content_html, image_mapping)
 
@@ -657,6 +761,8 @@ def main():
                         choices=[0, 1, 2],
                         default=2,
                         help='内容过滤级别：0=最小过滤（保留所有），1=中等过滤（过滤广告），2=激进过滤（只保留正文，默认）')
+    parser.add_argument('--wps', action='store_true',
+                        help='高质量模式：保留颜色/粗体/标题格式直接导入 WPS 笔记（需要 wpsnote-cli）')
 
     args = parser.parse_args()
 
@@ -668,7 +774,8 @@ def main():
 
     output_root = args.dir or DEFAULT_OUTPUT_ROOT
     filter_level = args.filter
-    success = scrape_url(url, output_root=output_root, custom_dir_name=args.output, filter_level=filter_level)
+    success = scrape_url(url, output_root=output_root, custom_dir_name=args.output,
+                         filter_level=filter_level, import_wps=args.wps)
 
     sys.exit(0 if success else 1)
 

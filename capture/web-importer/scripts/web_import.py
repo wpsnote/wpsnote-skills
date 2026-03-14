@@ -38,7 +38,8 @@ def is_wechat_url(url: str) -> bool:
         return False
 
 
-def run_wechat(url: str, output_root: str, custom_dir: str | None) -> bool:
+def run_wechat(url: str, output_root: str, custom_dir: str | None,
+               import_wps: bool = False) -> bool:
     """调用微信公众号爬取模块"""
     # 将 download_articles.py 的核心逻辑以模块方式引用
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -56,9 +57,11 @@ def run_wechat(url: str, output_root: str, custom_dir: str | None) -> bool:
 
     os.makedirs(output_root, exist_ok=True)
     print(f"[微信] 检测到公众号文章，使用微信专用爬取模块")
+    if import_wps:
+        print(f"[微信] WPS 高质量模式：保留颜色/粗体/标题格式")
     print(f"[微信] 输出目录：{os.path.abspath(output_root)}\n")
 
-    success = da.download_article_from_url(url, output_root)
+    success = da.download_article_from_url(url, output_root, import_wps=import_wps)
 
     if success:
         # download_articles.py 使用 MMDD_标题 的子目录，找到它并重命名为 content.md
@@ -97,7 +100,8 @@ def _normalize_wechat_output(output_root: str):
         print(f"[微信] content.md 已创建：{content_md}")
 
 
-def run_generic(url: str, output_root: str, custom_dir: str | None, filter_level: int) -> bool:
+def run_generic(url: str, output_root: str, custom_dir: str | None,
+                filter_level: int, import_wps: bool = False) -> bool:
     """调用通用网页爬取模块"""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, script_dir)
@@ -109,13 +113,18 @@ def run_generic(url: str, output_root: str, custom_dir: str | None, filter_level
         return False
 
     print(f"[通用] 使用通用网页爬取模块")
-    print(f"[通用] 过滤级别：{filter_level}（0=最小 1=中等 2=激进）\n")
+    print(f"[通用] 过滤级别：{filter_level}（0=最小 1=中等 2=激进）")
+    if import_wps:
+        print(f"[通用] WPS 高质量模式：保留颜色/粗体/标题格式\n")
+    else:
+        print()
 
     return wtm.scrape_url(
         url,
         output_root=output_root,
         custom_dir_name=custom_dir,
         filter_level=filter_level,
+        import_wps=import_wps,
     )
 
 
@@ -137,6 +146,10 @@ def main():
         type=int, choices=[0, 1, 2], default=2,
         help='通用网页内容过滤级别：0=最小 1=中等 2=激进（默认2，仅通用网页有效）'
     )
+    parser.add_argument(
+        '--wps', action='store_true',
+        help='高质量模式：保留颜色/粗体/标题格式直接导入 WPS 笔记（需要 wpsnote-cli）'
+    )
 
     args = parser.parse_args()
     url = args.url.strip()
@@ -151,9 +164,9 @@ def main():
     output_root = args.dir or default_root
 
     if is_wechat_url(url):
-        success = run_wechat(url, output_root, args.output)
+        success = run_wechat(url, output_root, args.output, import_wps=args.wps)
     else:
-        success = run_generic(url, output_root, args.output, args.filter)
+        success = run_generic(url, output_root, args.output, args.filter, import_wps=args.wps)
 
     sys.exit(0 if success else 1)
 
