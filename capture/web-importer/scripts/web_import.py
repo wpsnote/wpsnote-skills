@@ -4,10 +4,12 @@
 web_import.py — 网页内容爬取统一入口
 自动识别 URL 类型，分发给对应的爬取脚本：
   - 微信公众号 (mp.weixin.qq.com) → download_articles.py
+  - X/Twitter (x.com, twitter.com) → twitter_import.py
   - 其他通用网页                   → web_to_md.py
 
 用法：
   python3.11 web_import.py "https://mp.weixin.qq.com/s/xxxxx"
+  python3.11 web_import.py "https://x.com/user/status/xxx" --wps
   python3.11 web_import.py "https://example.com/article"
   python3.11 web_import.py "URL" -o 自定义目录名
   python3.11 web_import.py "URL" -d /path/to/output/root
@@ -21,6 +23,9 @@ web_import.py — 网页内容爬取统一入口
 
 依赖安装：
   pip3.11 install requests beautifulsoup4 readability-lxml markdownify lxml
+  # X/Twitter 额外依赖：
+  pip3.11 install playwright
+  python3.11 -m playwright install chromium
 """
 
 import sys
@@ -34,6 +39,16 @@ def is_wechat_url(url: str) -> bool:
     try:
         parsed = urlparse(url)
         return 'mp.weixin.qq.com' in parsed.netloc
+    except Exception:
+        return False
+
+
+def is_twitter_url(url: str) -> bool:
+    """判断是否为 X/Twitter 推文链接"""
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower().lstrip('www.')
+        return domain in ('x.com', 'twitter.com')
     except Exception:
         return False
 
@@ -98,6 +113,26 @@ def _normalize_wechat_output(output_root: str):
             import shutil
             shutil.copy2(draft_md, content_md)
         print(f"[微信] content.md 已创建：{content_md}")
+
+
+def run_twitter(url: str, output_root: str, import_wps: bool = False) -> bool:
+    """调用 X/Twitter 爬取模块"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, script_dir)
+
+    try:
+        import twitter_import as ti
+    except ImportError:
+        print("[错误] 找不到 twitter_import.py，请确认脚本在同一目录下")
+        return False
+
+    os.makedirs(output_root, exist_ok=True)
+    print(f"[X/Twitter] 检测到 X 推文链接，使用 Twitter 专用爬取模块")
+    if import_wps:
+        print(f"[X/Twitter] WPS 高质量模式：原样复制推文内容到笔记")
+    print(f"[X/Twitter] 输出目录：{os.path.abspath(output_root)}\n")
+
+    return ti.scrape_twitter(url, output_root=output_root, import_wps=import_wps)
 
 
 def run_generic(url: str, output_root: str, custom_dir: str | None,
@@ -165,6 +200,8 @@ def main():
 
     if is_wechat_url(url):
         success = run_wechat(url, output_root, args.output, import_wps=args.wps)
+    elif is_twitter_url(url):
+        success = run_twitter(url, output_root, import_wps=args.wps)
     else:
         success = run_generic(url, output_root, args.output, args.filter, import_wps=args.wps)
 
