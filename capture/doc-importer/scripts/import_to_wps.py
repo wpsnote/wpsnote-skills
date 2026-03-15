@@ -861,7 +861,8 @@ def full_pipeline(
 
     for i, file_info in enumerate(selected_files, 1):
         file_path = Path(file_info['path'])
-        out_dir = tmp_root / f"{i:04d}_{re.sub(r'[^\w\u4e00-\u9fa5-]', '_', file_path.stem)}"
+        safe_stem = re.sub(r'[^\w\u4e00-\u9fa5-]', '_', file_path.stem)
+        out_dir = tmp_root / f"{i:04d}_{safe_stem}"
         print(f'\n[{i}/{len(selected_files)}] {file_info["rel_path"]}')
 
         if resume:
