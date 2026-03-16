@@ -424,14 +424,8 @@ def article_blocks_to_segments(
         elif btype == 'p':
             segments.append(('xml', b['content']))
         elif btype == 'code':
-            code_text = _xml_escape_inline(b['content'])
-            segments.append(('xml',
-                f'<highlightBlock emoji="💻" '
-                f'highlightBlockBackgroundColor="#EBEBEB" '
-                f'highlightBlockBorderColor="#C5C5C5">'
-                f'<p>{code_text}</p>'
-                f'</highlightBlock>'
-            ))
+            escaped = _xml_escape_inline(b['content'])
+            segments.append(('xml', f'<codeblock>{escaped}</codeblock>'))
         elif btype == 'img':
             local_path = img_mapping.get(b['img_url'])
             if local_path and os.path.exists(local_path):

@@ -279,6 +279,22 @@ def html_to_segments(html_path: Path, img_dir: Path) -> list:
             segments.append(('xml', f'<h3>{inline}</h3>'))
         elif tag in ('h5', 'h6'):
             segments.append(('xml', f'<h4>{inline}</h4>'))
+        elif tag == 'pre':
+            code_el = el.find('code')
+            lang = ''
+            if code_el:
+                cls = ' '.join(code_el.get('class', []))
+                m = re.search(r'language-(\w+)', cls)
+                if m:
+                    lang = m.group(1)
+                code_text = code_el.get_text()
+            else:
+                code_text = el.get_text()
+            if code_text.strip():
+                lang_attr = f' lang="{lang}"' if lang else ''
+                escaped = code_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                segments.append(('xml', f'<codeblock{lang_attr}>{escaped}</codeblock>'))
+            return
         elif tag == 'blockquote':
             inner_xml = inline_to_xml(el).strip()
             inner = (f'<p>{inner_xml}</p>' if '\n' not in inner_xml
