@@ -30,24 +30,24 @@ metadata:
 
 ## 笔记标签体系
 
-每部小说独立一套标签树，多级标签用 `//` 分隔写入 WPS 笔记。
+每部小说独立一套标签树，多级标签用 `/` 分隔写入 WPS 笔记。
 
 ```
-#小说名//meta                       ← 体裁、偏好、风格、进度等配置
-#小说名//设定//世界观               ← 世界背景、时代、规则体系
-#小说名//设定//场景                 ← 地点描写、场景库
-#小说名//设定//冲突                 ← 核心矛盾与戏剧冲突
-#小说名//设定//剧情梗概             ← 总体剧情走向与大纲
-#小说名//设定//伏笔                 ← 已埋伏笔及回收状态
-#小说名//设定//写作风格             ← 叙述视角、语言风格、节奏偏好
-#小说名//人物//主角：人物名         ← 主角设定（含生成的形象图）
-#小说名//人物//配角：人物名         ← 配角设定（含生成的形象图）
-#小说名//人物//人物关系图           ← 角色之间的关系网
-#小说名//剧情日志                   ← 每章事件摘要+角色状态+伏笔（防穿帮核心）
-#小说名//正文//第N章                ← 各章节正文
+#小说名/meta                       ← 体裁、偏好、风格、进度等配置
+#小说名/设定/世界观               ← 世界背景、时代、规则体系
+#小说名/设定/场景                 ← 地点描写、场景库
+#小说名/设定/冲突                 ← 核心矛盾与戏剧冲突
+#小说名/设定/剧情梗概             ← 总体剧情走向与大纲
+#小说名/设定/伏笔                 ← 已埋伏笔及回收状态
+#小说名/设定/写作风格             ← 叙述视角、语言风格、节奏偏好
+#小说名/人物/主角：人物名         ← 主角设定（含生成的形象图）
+#小说名/人物/配角：人物名         ← 配角设定（含生成的形象图）
+#小说名/人物/人物关系图           ← 角色之间的关系网
+#小说名/剧情日志                   ← 每章事件摘要+角色状态+伏笔（防穿帮核心）
+#小说名/正文/第N章                ← 各章节正文
 ```
 
-标签写法（XML 格式）：`<tag>#小说名//设定//世界观</tag>`
+标签写法（XML 格式）：`<tag>#小说名/设定/世界观</tag>`
 
 ---
 
@@ -115,7 +115,7 @@ AI 只问一句话，用户回答后自动推导：
 
 ```
 title: 《小说名》创作设定
-tag: #小说名//meta
+tag: #小说名/meta
 
 XML 内容：
 <h1>《小说名》创作设定</h1>
@@ -134,7 +134,7 @@ XML 内容：
 
 ```
 title: 《小说名》世界观设定
-tag: #小说名//设定//世界观
+tag: #小说名/设定/世界观
 
 XML 内容包含：
 - 世界背景（时代/地理/社会结构）
@@ -147,7 +147,7 @@ XML 内容包含：
 
 ```
 title: 人物设定 — 角色名
-tag: #小说名//人物//主角：角色名
+tag: #小说名/人物/主角：角色名
 
 XML 内容包含：
 - 外貌描述（详细，用于生图）
@@ -162,16 +162,16 @@ XML 内容包含：
 创建完人物笔记后，**立即生成人物形象图**：
 
 ```
-// Step A：生成图片（耗时 30-120 秒，每分钟限 1 次）
+/ Step A：生成图片（耗时 30-120 秒，每分钟限 1 次）
 generate_image({
   prompt: "[角色外貌描述]，[体裁]插画风格，精细人物肖像，[主要色调]。限 500 字符以内",
-  width: 1536,   // 竖版人物肖像
+  width: 1536,   / 竖版人物肖像
   height: 2688
 })
-→ { image_url: "https://...", task_id: "..." }
+→ { image_url: "https:/...", task_id: "..." }
 
-// Step B：插入人物笔记末尾
-// 先获取笔记末尾的 block_id
+/ Step B：插入人物笔记末尾
+/ 先获取笔记末尾的 block_id
 get_note_outline({ note_id: 人物笔记 })
 → 找到最后一个 block_id（last_block）
 
@@ -190,7 +190,7 @@ insert_image({
 
 ```
 title: 《小说名》剧情梗概
-tag: #小说名//设定//剧情梗概
+tag: #小说名/设定/剧情梗概
 
 XML 内容包含：
 - 故事起点
@@ -203,7 +203,7 @@ XML 内容包含：
 
 ```
 title: 《小说名》伏笔日志
-tag: #小说名//设定//伏笔
+tag: #小说名/设定/伏笔
 
 初始内容：
 <h1>《小说名》伏笔日志</h1>
@@ -218,7 +218,7 @@ tag: #小说名//设定//伏笔
 
 ```
 title: 《小说名》剧情日志
-tag: #小说名//剧情日志
+tag: #小说名/剧情日志
 
 初始内容：
 <h1>《小说名》剧情日志</h1>
@@ -242,7 +242,7 @@ tag: #小说名//剧情日志
 ### 检查 0：读 Meta，获取写作约束
 
 ```
-search_notes({ tags: ["#小说名//meta"], limit: 1 })
+search_notes({ tags: ["#小说名/meta"], limit: 1 })
 → note_id_meta
 
 search_note_content({ note_id: note_id_meta, query: "章节目标字数" })
@@ -257,11 +257,11 @@ read_blocks({ note_id: note_id_meta, block_id: 字数block })
 ### 检查 1：读上一章结尾
 
 ```
-// 按标签找最新章节
-search_notes({ tags: ["#小说名//正文"], sort: "update_time", direction: "desc", limit: 1 })
+/ 按标签找最新章节
+search_notes({ tags: ["#小说名/正文"], sort: "update_time", direction: "desc", limit: 1 })
 → 获取最新章节 note_id
 
-// 读最后约 300-500 字
+/ 读最后约 300-500 字
 get_note_outline({ note_id: 最新章节 })
 → 找到后几个 block_id
 
@@ -274,7 +274,7 @@ read_blocks({ note_id: 最新章节, block_id: 倒数第二个block, after: 5 })
 ### 检查 2：扫描剧情日志
 
 ```
-search_notes({ tags: ["#小说名//剧情日志"], limit: 1 })
+search_notes({ tags: ["#小说名/剧情日志"], limit: 1 })
 → 获取剧情日志 note_id
 
 read_note({ note_id: 剧情日志 })
@@ -286,8 +286,8 @@ read_note({ note_id: 剧情日志 })
 ### 检查 3：读本章相关角色状态
 
 ```
-// 对将要出场的主要角色
-search_notes({ keyword: "角色名", tags: ["#小说名//人物"] })
+/ 对将要出场的主要角色
+search_notes({ keyword: "角色名", tags: ["#小说名/人物"] })
 → 获取角色笔记 note_id
 
 search_note_content({ note_id: 角色笔记, query: "当前状态" })
@@ -302,11 +302,11 @@ read_blocks({ note_id: 角色笔记, block_id: 当前状态block })
 当用户提出"这章要出现 XX"、"处理某件事"等要求：
 
 ```
-// 语义检索相关设定
+/ 语义检索相关设定
 search_notes({ keyword: "用户提到的关键词", tags: ["#小说名"] })
 → 确认相关设定细节
 
-// 检查剧情日志有无相关铺垫
+/ 检查剧情日志有无相关铺垫
 search_note_content({ note_id: 剧情日志, query: "关键词" })
 → 确认前文有无伏笔
 ```
@@ -337,22 +337,22 @@ search_note_content({ note_id: 剧情日志, query: "关键词" })
 create_note({ title: "第X章 章节名" })
 → { fileId: new_note_id }
 
-// 获取空 block_id
+/ 获取空 block_id
 get_note_outline({ note_id: new_note_id })
 → { blocks: [{ id: "p_empty", type: "paragraph" }] }
 
-// 批量写入：替换空 block + 插入正文 + 打标签
+/ 批量写入：替换空 block + 插入正文 + 打标签
 batch_edit({ note_id: new_note_id, operations: [
   { op: "replace", block_id: "p_empty", content: "<h1>第X章 章节名</h1>" },
   { op: "insert", anchor_id: "p_empty", position: "after",
-    content: "<p><tag>#小说名//正文//第X章</tag></p><p>正文第一段...</p><p>正文第二段...</p>..." }
+    content: "<p><tag>#小说名/正文/第X章</tag></p><p>正文第一段...</p><p>正文第二段...</p>..." }
 ]})
 ```
 
 ### 归档 2：追加剧情日志
 
 ```
-// 找剧情日志末尾的 block_id
+/ 找剧情日志末尾的 block_id
 get_note_outline({ note_id: 剧情日志 })
 → 获取 last_block_id
 
@@ -367,11 +367,11 @@ edit_block({ note_id: 剧情日志, op: "insert",
 对本章中状态发生变化的角色：
 
 ```
-// 定位角色笔记中的"当前状态"字段
+/ 定位角色笔记中的"当前状态"字段
 search_note_content({ note_id: 角色笔记, query: "当前状态" })
 → 定位 block_id
 
-// 替换状态描述
+/ 替换状态描述
 edit_block({ note_id: 角色笔记, op: "replace",
   block_id: 状态block_id,
   content: "<p>当前状态：[新状态描述]</p>"
@@ -381,8 +381,8 @@ edit_block({ note_id: 角色笔记, op: "replace",
 ### 归档 4：更新伏笔日志（若有变化）
 
 ```
-// 新埋伏笔：追加到伏笔日志末尾
-// 回收伏笔：找到对应条目替换状态文字
+/ 新埋伏笔：追加到伏笔日志末尾
+/ 回收伏笔：找到对应条目替换状态文字
 search_note_content({ note_id: 伏笔日志, query: "伏笔关键词" })
 → 定位 block_id
 
@@ -456,13 +456,13 @@ search_notes({ keyword: "小说名" })
 → 识别笔记集合
 
 Step 2：读 meta 笔记（获取风格约束）
-search_notes({ tags: ["#小说名//meta"], limit: 1 })
+search_notes({ tags: ["#小说名/meta"], limit: 1 })
 → note_id_meta
 read_note({ note_id: note_id_meta })
 → 风格约束
 
 Step 3：读最新章节结尾
-search_notes({ tags: ["#小说名//正文"], sort: "update_time", direction: "desc", limit: 1 })
+search_notes({ tags: ["#小说名/正文"], sort: "update_time", direction: "desc", limit: 1 })
 → note_id_latest
 get_note_outline({ note_id: note_id_latest })
 → 获取末尾几个 block_id
@@ -470,7 +470,7 @@ read_blocks({ note_id: note_id_latest, block_id: 倒数block, after: 5 })
 → 结尾内容
 
 Step 4：扫描剧情日志
-search_notes({ tags: ["#小说名//剧情日志"], limit: 1 })
+search_notes({ tags: ["#小说名/剧情日志"], limit: 1 })
 → note_id_log
 read_note({ note_id: note_id_log })
 
