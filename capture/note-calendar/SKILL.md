@@ -74,7 +74,7 @@ cal-test        # 运行全量 CRUD 测试
 | 「整理 TODO」「收集所有待办」 | **模式 F**：TODO 汇总 |
 | 说法不明确 | 列出六个模式让用户选 |
 
-> 笔记写入格式参考 `references/note-templates.md`
+> 笔记写入格式参考 `docs/note-templates.md`
 
 ---
 
@@ -107,7 +107,7 @@ cal-query <参数>    # 根据用户描述选合适的参数
    - 有打开的笔记 → 询问「写入当前笔记，还是新建？」
    - 无 → 新建：`wpsnote-cli create --title "📋 今日规划 YYYY-MM-DD" --json`
 
-4. 按 `references/note-templates.md` 模式 B 结构写入
+4. 按 `docs/note-templates.md` 模式 B 结构写入
 
 5. 输出摘要：`✓ 今日规划已写入「📋 今日规划 YYYY-MM-DD」｜日程 N 条 ｜ 关联笔记 N 篇`
 
@@ -161,7 +161,7 @@ cal-query <参数>    # 根据用户描述选合适的参数
    - CLI：`wpsnote-cli find --keyword "<事件关键词>" --limit 3 --json`
    - MCP：`search_notes(keyword="<事件关键词>", limit=3)`
 
-4. 写入前置任务块（格式见 `references/note-templates.md` 模式 D）
+4. 写入前置任务块（格式见 `docs/note-templates.md` 模式 D）
 
 5. 询问是否追加到今天日历（可选）
 
@@ -183,7 +183,7 @@ cal-query <参数>    # 根据用户描述选合适的参数
    - 识别高负载时段（连续 3 个以上会议无间隙）
    - 标记适合深度工作的轻松时段
 
-3. 按 `references/note-templates.md` 模式 E 结构写入时间线规划
+3. 按 `docs/note-templates.md` 模式 E 结构写入时间线规划
 
 ---
 
