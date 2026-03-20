@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+# cal-delete — 删除日历事件（通过 UID）
+#
+# 用法：
+#   cal-delete <UID>
+
+import sys
+import os
+import subprocess
+import tempfile
+
+def usage():
+    print("""用法: cal-delete <UID>
+
+UID 由 cal-add 创建时输出的最后一行。
+
+示例:
+  cal-delete 3A2B1C-4D5E-...""")
+    sys.exit(1)
+
+if len(sys.argv) < 2:
+    usage()
+
+EVENT_UID = sys.argv[1]
+
+# 从缓存读取 UID 对应日历，优先定向删除
+cache_file = os.path.expanduser("~/.cursor/skills/mac-calendar/.cache/events.tsv")
+hint_cal = ""
+if os.path.exists(cache_file):
+    try:
+        with open(cache_file, "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) >= 2 and parts[0] == EVENT_UID:
+                    hint_cal = parts[1]
+    except Exception:
+        pass
+
+script = f'''
+tell application "Calendar"
+    set refDate to (current date)
+    set year of refDate to 2001
+    set month of refDate to 1
+    set day of refDate to 1
+    set time of refDate to 0
+
+    set targetUID to "{EVENT_UID}"
+    set hintCal to "{hint_cal}"
+    set found to false
+
+    -- 先按提示日历查
+    if hintCal is not "" then
+        try
+            tell calendar hintCal
+                set evs to (every event whose uid is targetUID)
+                if (count of evs) > 0 then
+                    set e to item 1 of evs
+                    set found to true
+                    set titleStr to summary of e
+                    delete e
+                    return "OK: 已删除「" & titleStr & "」"
+                end if
+            end tell
+        end try
+    end if
+
+    -- 全日历兜底
+    repeat with c in calendars
+        try
+            set evs to (every event of c whose uid is targetUID)
+            if (count of evs) > 0 then
+                set e to item 1 of evs
+                set found to true
+                set titleStr to summary of e
+                delete e
+                return "OK: 已删除「" & titleStr & "」"
+            end if
+        end try
+    end repeat
+
+    if not found then return "ERROR: 找不到 UID=" & targetUID
+end tell
+'''
+
+with tempfile.NamedTemporaryFile(mode="w", suffix=".applescript",
+                                  encoding="utf-8", delete=False) as f:
+    f.write(script)
+    tmp = f.name
+
+try:
+    r = subprocess.run(["osascript", tmp], capture_output=True,
+                       text=True, timeout=180, encoding="utf-8")
+    result = (r.stdout + r.stderr).strip()
+finally:
+    os.unlink(tmp)
+
+if result.startswith("ERROR"):
+    print(result, file=sys.stderr)
+    sys.exit(1)
+
+print(f"✓ {result}")
+
+# 从缓存移除该 UID
+if os.path.exists(cache_file):
+    try:
+        kept = []
+        with open(cache_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if not line.startswith(EVENT_UID + "\t"):
+                    kept.append(line)
+        with open(cache_file, "w", encoding="utf-8") as f:
+            f.writelines(kept)
+    except Exception:
+        pass

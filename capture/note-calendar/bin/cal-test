@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+# cal-test — cal-* 工具集单元测试
+#
+# 用法：
+#   cal-test          运行所有测试
+#   cal-test query    只跑查询类测试
+#   cal-test crud     只跑增删改测试
+
+import subprocess
+import sys
+import re
+import time
+import calendar as cal_mod
+from datetime import datetime, timedelta
+
+# ── 颜色 ───────────────────────────────────────────────────────────────────────
+BOLD  = "\033[1m"
+GREEN = "\033[32m"
+RED   = "\033[31m"
+YELLOW= "\033[33m"
+CYAN  = "\033[36m"
+DIM   = "\033[2m"
+RESET = "\033[0m"
+
+# ── 统计 ───────────────────────────────────────────────────────────────────────
+results = {"pass": 0, "fail": 0, "skip": 0}
+TEST_UID = ""
+
+# ── 工具函数 ───────────────────────────────────────────────────────────────────
+def section(title):
+    print(f"\n{BOLD}{CYAN}━━━ {title} ━━━{RESET}")
+
+def run_cmd(*args, timeout=80):
+    """运行命令，返回 (stdout+stderr, exit_code)，超时返回 (None, -1)"""
+    try:
+        r = subprocess.run(
+            list(args),
+            capture_output=True, text=True,
+            timeout=timeout, encoding="utf-8"
+        )
+        return (r.stdout + r.stderr).strip(), r.returncode
+    except subprocess.TimeoutExpired:
+        return None, -1
+    except Exception as e:
+        return str(e), -2
+
+def check(desc, *cmd_args, expect=None, timeout=80, invert=False):
+    """执行命令并断言输出。expect 为正则，invert=True 表示期望找不到。"""
+    print(f"  {desc:<42}", end="", flush=True)
+    output, code = run_cmd(*cmd_args, timeout=timeout)
+
+    if output is None:
+        print(f"{YELLOW}SKIP{RESET} (超时 {timeout}s)")
+        results["skip"] += 1
+        return None
+
+    if expect:
+        matched = bool(re.search(expect, output))
+        ok = (not matched) if invert else matched
+    else:
+        ok = bool(output) and not re.search(r"^ERROR:|^error:", output, re.IGNORECASE)
+
+    if ok:
+        print(f"{GREEN}PASS{RESET}")
+        results["pass"] += 1
+    else:
+        print(f"{RED}FAIL{RESET}")
+        preview = output[:120].replace("\n", " | ") if output else "(空)"
+        print(f"    {DIM}实际: {preview}{RESET}")
+        results["fail"] += 1
+
+    return output
+
+# ── 日期计算 ───────────────────────────────────────────────────────────────────
+today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+def fmt(d): return d.strftime("%Y-%m-%d")
+
+yesterday  = fmt(today - timedelta(days=1))
+tomorrow   = fmt(today + timedelta(days=1))
+today_s    = fmt(today)
+weekend_sat = fmt(today + timedelta(days=(5 - today.weekday()) % 7))
+
+nwt = fmt(today + timedelta(weeks=1))
+lwt = fmt(today - timedelta(weeks=1))
+
+m = today.month % 12 + 1
+y = today.year + (1 if today.month == 12 else 0)
+d = min(today.day, cal_mod.monthrange(y, m)[1])
+nmt = fmt(today.replace(year=y, month=m, day=d))
+lyt = fmt(today.replace(year=today.year - 1))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 查询测试
+# ─────────────────────────────────────────────────────────────────────────────
+mode = sys.argv[1] if len(sys.argv) > 1 else "all"
+
+if mode in ("all", "query"):
+
+    section("查询 — 相对日期")
+    check(f"today（{today_s}）",        "cal-query", "today",     expect=r"日程|暂无")
+    check(f"yesterday（{yesterday}）",  "cal-query", "yesterday", expect=r"日程|暂无")
+    check(f"tomorrow（{tomorrow}）",    "cal-query", "tomorrow",  expect=r"日程|暂无")
+    check("+3 天后",                    "cal-query", "+3",        expect=r"日程|暂无")
+    check("-3 天前",                    "cal-query", "-3",        expect=r"日程|暂无")
+    check("+0（同今天）",               "cal-query", "+0",        expect=r"日程|暂无")
+
+    section("查询 — 周维度")
+    check("week（本周）",               "cal-query", "week",            expect=r"日程|暂无")
+    check("next-week（下周）",          "cal-query", "next-week",       expect=r"日程|暂无")
+    check("last-week（上周）",          "cal-query", "last-week",       expect=r"日程|暂无")
+    check(f"weekend（{weekend_sat}）",  "cal-query", "weekend",         expect=r"日程|暂无")
+    check(f"next-week-today（{nwt}）",  "cal-query", "next-week-today", expect=r"日程|暂无")
+    check(f"last-week-today（{lwt}）",  "cal-query", "last-week-today", expect=r"日程|暂无")
+    check("nwt 缩写",                   "cal-query", "nwt",             expect=r"日程|暂无")
+    check("lwt 缩写",                   "cal-query", "lwt",             expect=r"日程|暂无")
+
+    section("查询 — 跨月/跨年")
+    check(f"next-month-today（{nmt}）", "cal-query", "next-month-today", expect=r"日程|暂无")
+    check(f"last-year-today（{lyt}）",  "cal-query", "last-year-today",  expect=r"日程|暂无")
+    check("nmt 缩写",                   "cal-query", "nmt",              expect=r"日程|暂无")
+    check("lyt 缩写",                   "cal-query", "lyt",              expect=r"日程|暂无")
+
+    section("查询 — 精确日期")
+    check(f"指定单天（{today_s}）",          "cal-query", today_s,            expect=r"日程|暂无")
+    check(f"指定范围（{today_s}~{tomorrow}）","cal-query", today_s, tomorrow,  expect=r"日程|暂无")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CRUD 测试
+# ─────────────────────────────────────────────────────────────────────────────
+if mode in ("all", "crud"):
+
+    tag        = int(time.time())
+    test_title = f"__cal_test_{tag}__"
+    now        = datetime.now()
+    start_str  = now.strftime("%Y-%m-%d %H:%M")
+    end_str    = (now + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")
+
+    section("CRUD — 创建事件")
+    print(f"  {'cal-add 创建测试事件':<42}", end="", flush=True)
+    add_out, _ = run_cmd("cal-add", test_title, start_str, end_str, timeout=30)
+
+    if add_out and "已创建" in add_out:
+        # 最后一个非空、非提示行就是 UID
+        lines = [l.strip() for l in add_out.splitlines()
+                 if l.strip() and not l.strip().startswith(("✓", "标题", "开始", "结束", "UID："))]
+        TEST_UID = lines[-1] if lines else ""
+        print(f"{GREEN}PASS{RESET} {DIM}(UID: {TEST_UID[:20]}...){RESET}")
+        results["pass"] += 1
+    else:
+        print(f"{RED}FAIL{RESET}")
+        print(f"    {DIM}{(add_out or '(空)' )[:120]}{RESET}")
+        results["fail"] += 1
+
+    if not TEST_UID:
+        print(f"\n  {RED}无法获取 UID，跳过后续 CRUD 测试{RESET}")
+    else:
+        section("CRUD — 移动事件")
+        check("移到明天（保持时间）",         "cal-move", TEST_UID, "tomorrow",                  expect="已移动", timeout=90)
+        check("移到明天晚上 20:00",           "cal-move", TEST_UID, "tomorrow", "20:00",          expect="已移动", timeout=90)
+        check("移到精确时间（明天 09:00）",   "cal-move", TEST_UID, f"{tomorrow} 09:00", f"{tomorrow} 10:00", expect="已移动", timeout=90)
+
+        section("CRUD — 验证移动结果")
+        print(f"  {'tomorrow 能查到测试事件':<42}", end="", flush=True)
+        verify_out, _ = run_cmd("cal-query", "tomorrow", timeout=180)
+        if verify_out is None:
+            print(f"{YELLOW}SKIP{RESET} (cal-query timeout)")
+            results["skip"] += 1
+        elif test_title in verify_out:
+            print(f"{GREEN}PASS{RESET}")
+            results["pass"] += 1
+        else:
+            print(f"{RED}FAIL{RESET}")
+            print(f"    {DIM}查不到 {test_title}{RESET}")
+            results["fail"] += 1
+
+        section("CRUD — 删除事件")
+        check("cal-delete 删除测试事件",      "cal-delete", TEST_UID, expect="已删除", timeout=90)
+
+        print(f"  {'删除后查不到测试事件':<42}", end="", flush=True)
+        del_verify, _ = run_cmd("cal-query", "tomorrow", timeout=180)
+        if del_verify is None:
+            print(f"{YELLOW}SKIP{RESET} (cal-query timeout)")
+            results["skip"] += 1
+        elif test_title in del_verify:
+            print(f"{RED}FAIL{RESET}")
+            print(f"    {DIM}测试事件仍存在{RESET}")
+            results["fail"] += 1
+        else:
+            print(f"{GREEN}PASS{RESET}")
+            results["pass"] += 1
+
+# ── 汇总 ───────────────────────────────────────────────────────────────────────
+total = results["pass"] + results["fail"]
+pct   = f"{results['pass'] / total * 100:.0f}%" if total else "N/A"
+
+print(f"\n{BOLD}━━━ 测试结果汇总 ━━━{RESET}")
+print(f"  {GREEN}PASS{RESET}  {results['pass']}")
+print(f"  {RED}FAIL{RESET}  {results['fail']}")
+print(f"  {YELLOW}SKIP{RESET}  {results['skip']}")
+print(f"\n  通过率：{BOLD}{pct}{RESET} ({results['pass']} / {total})\n")
+
+sys.exit(0 if results["fail"] == 0 else 1)

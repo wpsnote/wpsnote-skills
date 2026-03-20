@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+# cal-query — 查询 macOS 日历日程
+#
+# 用法：
+#   cal-query today          今天
+#   cal-query tomorrow       明天
+#   cal-query week           本周（周一到周日）
+#   cal-query next-week      下周（周一到周日）
+#   cal-query +3             3 天后（当天）
+#   cal-query 2026-03-25     指定日期（单天）
+#   cal-query 2026-03-23 2026-03-29  指定日期范围
+#
+# 依赖：macOS 日历 App（osascript）
+
+set -euo pipefail
+
+# ── 颜色 ───────────────────────────────────────────────────────────────────────
+BOLD="\033[1m"
+CYAN="\033[36m"
+YELLOW="\033[33m"
+RESET="\033[0m"
+
+# ── 帮助 ───────────────────────────────────────────────────────────────────────
+usage() {
+  cat <<EOF
+用法: cal-query <参数>
+
+相对日期:
+  today              今天
+  yesterday          昨天
+  tomorrow           明天
+  +N                 N 天后（+3 = 3 天后当天）
+  -N                 N 天前（-3 = 3 天前当天）
+
+本周/上下周:
+  week               本周（周一 ~ 周日）
+  weekend            本周末（周六 ~ 周日）
+  next-week          下周（周一 ~ 周日）
+  last-week          上周（周一 ~ 周日）
+  next-week-today    下周同一天（缩写 nwt）
+  last-week-today    上周同一天（缩写 lwt）
+
+跨月/跨年:
+  next-month-today   下个月今天（缩写 nmt）
+  last-year-today    去年今天（缩写 lyt）
+
+精确日期:
+  YYYY-MM-DD              指定某一天
+  YYYY-MM-DD YYYY-MM-DD   指定日期范围
+
+示例:
+  cal-query today
+  cal-query weekend
+  cal-query next-week-today
+  cal-query last-year-today
+  cal-query -3
+  cal-query 2026-03-23 2026-03-29
+EOF
+  exit 0
+}
+
+# ── 参数解析 ───────────────────────────────────────────────────────────────────
+if [[ $# -eq 0 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  usage
+fi
+
+# 计算日期范围（Python 辅助计算，避免 bash 日期兼容问题）
+RANGE=$(python3 << PYEOF
+from datetime import datetime, timedelta
+import sys
+
+arg1 = "${1:-}"
+arg2 = "${2:-}"
+
+today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+def week_range(base_monday):
+    return base_monday, base_monday + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+def format_range(start, end):
+    print(f"{start.strftime('%Y-%m-%d %H:%M:%S')}|{end.strftime('%Y-%m-%d %H:%M:%S')}")
+
+def single_day(d):
+    return d, d.replace(hour=23, minute=59, second=59)
+
+if arg1 == "today":
+    format_range(*single_day(today))
+
+elif arg1 == "yesterday":
+    format_range(*single_day(today - timedelta(days=1)))
+
+elif arg1 == "tomorrow":
+    format_range(*single_day(today + timedelta(days=1)))
+
+elif arg1 == "week":
+    monday = today - timedelta(days=today.weekday())
+    format_range(*week_range(monday))
+
+elif arg1 in ("last-week", "lastweek"):
+    monday = today - timedelta(days=today.weekday()) - timedelta(weeks=1)
+    format_range(*week_range(monday))
+
+elif arg1 in ("next-week", "nextweek"):
+    monday = today - timedelta(days=today.weekday()) + timedelta(weeks=1)
+    format_range(*week_range(monday))
+
+elif arg1 in ("weekend", "this-weekend"):
+    # 本周六 ~ 周日
+    saturday = today + timedelta(days=(5 - today.weekday()) % 7)
+    sunday   = saturday + timedelta(days=1)
+    format_range(saturday, sunday.replace(hour=23, minute=59, second=59))
+
+elif arg1 in ("next-week-today", "nwt"):
+    # 下周同一天
+    format_range(*single_day(today + timedelta(weeks=1)))
+
+elif arg1 in ("last-week-today", "lwt"):
+    # 上周同一天
+    format_range(*single_day(today - timedelta(weeks=1)))
+
+elif arg1 in ("next-month-today", "nmt"):
+    # 下个月今天（月份+1，日期不变；如果目标月没有该日则取月末）
+    import calendar as cal_mod
+    m = today.month % 12 + 1
+    y = today.year + (1 if today.month == 12 else 0)
+    d = min(today.day, cal_mod.monthrange(y, m)[1])
+    format_range(*single_day(today.replace(year=y, month=m, day=d)))
+
+elif arg1 in ("last-year-today", "lyt"):
+    format_range(*single_day(today.replace(year=today.year - 1)))
+
+elif arg1.startswith("+") and arg1[1:].isdigit():
+    n = int(arg1[1:])
+    format_range(*single_day(today + timedelta(days=n)))
+
+elif arg1.startswith("-") and arg1[1:].isdigit():
+    n = int(arg1[1:])
+    format_range(*single_day(today - timedelta(days=n)))
+
+elif len(arg1) == 10 and arg1[4] == "-":
+    s = datetime.strptime(arg1, "%Y-%m-%d")
+    if arg2 and len(arg2) == 10 and arg2[4] == "-":
+        e = datetime.strptime(arg2, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+    else:
+        e = s.replace(hour=23, minute=59, second=59)
+    format_range(s, e)
+
+else:
+    print("ERROR: 无法识别的参数")
+    sys.exit(1)
+PYEOF
+)
+
+if [[ "$RANGE" == ERROR* ]]; then
+  echo "$RANGE"
+  usage
+fi
+
+START_STR=$(echo "$RANGE" | cut -d'|' -f1)
+END_STR=$(echo "$RANGE"   | cut -d'|' -f2)
+
+# 转换为 AppleScript 日期格式（macOS locale 相关，用 osascript 自身转换最稳）
+echo -e "${BOLD}${CYAN}📅 查询日程：${START_STR%% *} ~ ${END_STR%% *}${RESET}"
+echo -e "${YELLOW}（日历数据加载中，首次可能需要 30-60 秒...）${RESET}"
+echo ""
+
+# ── 计算 AppleScript epoch offset（纯本地时间差，避免时区干扰）─────────────────
+# AppleScript epoch = 本地 2001-01-01 00:00:00，用纯 timedelta 计算偏移
+AS_START=$(python3 -c "
+from datetime import datetime
+ref = datetime(2001, 1, 1)
+t   = datetime.strptime('$START_STR', '%Y-%m-%d %H:%M:%S')
+print(int((t - ref).total_seconds()))
+")
+AS_END=$(python3 -c "
+from datetime import datetime
+ref = datetime(2001, 1, 1)
+t   = datetime.strptime('$END_STR', '%Y-%m-%d %H:%M:%S')
+print(int((t - ref).total_seconds()))
+")
+
+RESULT=$(osascript 2>/dev/null << ASEOF
+tell application "Calendar"
+    set refDate to (current date)
+    set year of refDate to 2001
+    set month of refDate to 1
+    set day of refDate to 1
+    set time of refDate to 0
+    set sdObj to refDate + $AS_START
+    set edObj to refDate + $AS_END
+
+    set output to {}
+    repeat with c in calendars
+        set evs to (every event of c whose start date >= sdObj and start date <= edObj)
+        repeat with e in evs
+            set sd to start date of e
+            set ed to end date of e
+            set dateStr to ((year of sd as string) & "-" & (month of sd as integer as string) & "-" & (day of sd as string) & " " & (time of sd as string))
+            set endDateStr to ((year of ed as string) & "-" & (month of ed as integer as string) & "-" & (day of ed as string) & " " & (time of ed as string))
+            set end of output to (dateStr & "|||" & endDateStr & "|||" & summary of e & "|||" & (name of c))
+        end repeat
+    end repeat
+
+    if (count of output) is 0 then
+        return "EMPTY"
+    end if
+
+    set AppleScript's text item delimiters to linefeed
+    set r to output as string
+    set AppleScript's text item delimiters to ""
+    return r
+end tell
+ASEOF
+)
+
+# ── 输出格式化 ─────────────────────────────────────────────────────────────────
+if [[ -z "$RESULT" ]] || [[ "$RESULT" == "EMPTY" ]]; then
+  echo "该时间段内暂无日程。"
+  echo ""
+  echo "如果你觉得日历里应该有内容，可以试试："
+  echo ""
+  echo "  1. 扩大查询范围"
+  echo "     cal-query week              本周"
+  echo "     cal-query 2026-03-01 2026-03-31   整月"
+  echo ""
+  echo "  2. 指定你记得的日期"
+  echo "     cal-query 2026-03-25        某一天"
+  echo "     cal-query +7                7 天后"
+  echo ""
+  echo "  3. 如果你在找某类日程（如「上课」），"
+  echo "     可以告诉 AI：「查一下 3 月份的日程，找出有上课的日期」"
+  echo "     AI 会拉取更大范围再筛选"
+  exit 0
+fi
+
+CAL_RAW="$RESULT" python3 << 'PYEOF'
+import sys, os
+from datetime import datetime, timedelta
+
+raw = os.environ.get("CAL_RAW", "")
+lines = [l for l in raw.split("\n") if "|||" in l]
+
+events = []
+for line in lines:
+    parts = line.split("|||")
+    if len(parts) >= 4:
+        start_raw, end_raw, title, cal_name = parts[0].strip(), parts[1].strip(), parts[2].strip(), parts[3].strip()
+        # 格式：2026-3-23 54000（秒数）
+        try:
+            date_part, sec_part = start_raw.rsplit(" ", 1)
+            y, m, d = map(int, date_part.split("-"))
+            secs = int(sec_part)
+            dt = datetime(y, m, d) + timedelta(seconds=secs)
+        except Exception:
+            dt = None
+        try:
+            date_part2, sec_part2 = end_raw.rsplit(" ", 1)
+            y2, m2, d2 = map(int, date_part2.split("-"))
+            secs2 = int(sec_part2)
+            edt = datetime(y2, m2, d2) + timedelta(seconds=secs2)
+        except Exception:
+            edt = None
+        events.append((dt, edt, title, cal_name))
+
+events.sort(key=lambda x: x[0] or datetime.min)
+
+week_cn = ["周一","周二","周三","周四","周五","周六","周日"]
+
+current_day = ""
+for dt, edt, title, cal_name in events:
+    if dt is None:
+        continue
+    day_key = dt.strftime("%Y-%m-%d")
+    if day_key != current_day:
+        current_day = day_key
+        day_label = f"{dt.month}/{dt.day}({week_cn[dt.weekday()]})"
+        print(f"\n\033[1m{day_label}\033[0m")
+        print("─" * 40)
+    
+    # 判断全天事件：开始 00:00 且结束 00:00 次日
+    is_allday = (dt.hour == 0 and dt.minute == 0 and
+                 edt and edt.hour == 0 and edt.minute == 0)
+    time_label = "全天  " if is_allday else dt.strftime("%H:%M ")
+    print(f"  {time_label}  {title}  \033[2m[{cal_name}]\033[0m")
+
+print("")
+print(f"共 {len(events)} 个日程")
+PYEOF

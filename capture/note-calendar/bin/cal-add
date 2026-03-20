@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+# cal-add — 在 macOS 日历中创建事件
+#
+# 用法：
+#   cal-add "任务名称" "2026-03-25 15:00" "2026-03-25 16:00"
+#   cal-add "任务名称" "2026-03-25 15:00" "2026-03-25 16:00" "日历名称"
+#   cal-add "任务名称" "2026-03-25"                            # 全天事件
+#
+# 输出：成功时打印事件 UID，用于后续 cal-move / cal-delete
+
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+用法: cal-add <标题> <开始时间> [结束时间] [日历名]
+
+时间格式:
+  "YYYY-MM-DD HH:MM"   指定时间（结束时间默认为开始后 1 小时）
+  "YYYY-MM-DD"         全天事件
+
+示例:
+  cal-add "团队会议" "2026-03-25 15:00" "2026-03-25 16:00"
+  cal-add "读书" "2026-03-25 20:00"
+  cal-add "年假" "2026-03-25" "2026-03-27"
+  cal-add "站会" "2026-03-25 09:30" "2026-03-25 10:00" "工作"
+EOF
+  exit 1
+}
+
+[[ $# -lt 2 ]] && usage
+
+TITLE="$1"
+START_RAW="$2"
+END_RAW="${3:-}"
+CAL_NAME="${4:-}"
+
+# ── Python 计算 AS offset ───────────────────────────────────────────────────────
+read -r AS_START AS_END AS_ALLDAY < <(python3 << PYEOF
+from datetime import datetime, timedelta
+
+ref = datetime(2001, 1, 1)
+
+def to_as(dt):
+    return int((dt - ref).total_seconds())
+
+start_raw = "$START_RAW"
+end_raw   = "$END_RAW"
+
+allday = False
+if len(start_raw) == 10:
+    allday = True
+    s = datetime.strptime(start_raw, "%Y-%m-%d")
+    if end_raw and len(end_raw) == 10:
+        e = datetime.strptime(end_raw, "%Y-%m-%d") + timedelta(days=1)
+    else:
+        e = s + timedelta(days=1)
+else:
+    s = datetime.strptime(start_raw, "%Y-%m-%d %H:%M")
+    if end_raw and len(end_raw) >= 10:
+        try:
+            e = datetime.strptime(end_raw, "%Y-%m-%d %H:%M")
+        except:
+            e = datetime.strptime(end_raw, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+    else:
+        e = s + timedelta(hours=1)
+
+print(to_as(s), to_as(e), 1 if allday else 0)
+PYEOF
+)
+
+# ── osascript 创建事件 ─────────────────────────────────────────────────────────
+TMP_AS=$(mktemp /tmp/cal-add-XXXXXX.applescript)
+
+python3 << PYEOF
+import sys
+
+as_start  = $AS_START
+as_end    = $AS_END
+as_allday = $AS_ALLDAY
+title     = """$TITLE""".replace('"', '\\"')
+cal_name  = """$CAL_NAME""".replace('"', '\\"')
+
+script = f'''
+tell application "Calendar"
+    set refDate to (current date)
+    set year of refDate to 2001
+    set month of refDate to 1
+    set day of refDate to 1
+    set time of refDate to 0
+    set sdObj to refDate + {as_start}
+    set edObj to refDate + {as_end}
+
+    set targetCal to missing value
+    set calName to "{cal_name}"
+    if calName is "" then
+        set preferredNames to {{"徐奕成的日历", "日历", "工作", "旅行", "家庭", "事务", "交大 MTT"}}
+        repeat with preferred in preferredNames
+            set prefStr to contents of preferred
+            repeat with c in calendars
+                if name of c is prefStr then
+                    set targetCal to c
+                    exit repeat
+                end if
+            end repeat
+            if targetCal is not missing value then exit repeat
+        end repeat
+        if targetCal is missing value and (count of calendars) >= 3 then
+            set targetCal to item 3 of calendars
+        end if
+    else
+        repeat with c in calendars
+            if name of c is calName then
+                set targetCal to c
+                exit repeat
+            end if
+        end repeat
+    end if
+
+    if targetCal is missing value then
+        return "ERROR: 找不到可用日历"
+    end if
+
+    set newEvent to make new event at end of events of targetCal with properties {{summary:"{title}", start date:sdObj, end date:edObj, allday event:({as_allday} = 1)}}
+    return (uid of newEvent) & "|||" & (name of targetCal)
+end tell
+'''
+
+with open("$TMP_AS", "w", encoding="utf-8") as f:
+    f.write(script)
+PYEOF
+
+UID_RESULT=$(osascript "$TMP_AS" 2>/dev/null)
+rm -f "$TMP_AS"
+
+if [[ "$UID_RESULT" == ERROR* ]]; then
+  echo "$UID_RESULT" >&2
+  exit 1
+fi
+
+EVENT_UID="$(echo "$UID_RESULT" | cut -d'|' -f1)"
+EVENT_CAL="$(echo "$UID_RESULT" | awk -F'\\|\\|\\|' '{print $2}')"
+
+# 缓存 UID -> 日历名，给 cal-move / cal-delete 定向加速
+CACHE_DIR="$HOME/.cursor/skills/mac-calendar/.cache"
+CACHE_FILE="$CACHE_DIR/events.tsv"
+mkdir -p "$CACHE_DIR"
+printf "%s\t%s\t%s\t%s\n" "$EVENT_UID" "$EVENT_CAL" "$TITLE" "$(date +%s)" >> "$CACHE_FILE"
+
+echo "✓ 事件已创建"
+echo "  标题：$TITLE"
+echo "  开始：$START_RAW"
+echo "  结束：${END_RAW:-（自动）}"
+echo "  日历：$EVENT_CAL"
+echo "  UID：$EVENT_UID"
+echo "$EVENT_UID"
