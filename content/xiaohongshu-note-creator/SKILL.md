@@ -285,82 +285,103 @@ MCP 降级：`read_image({ note_id, block_id })`
 
 ---
 
-## Step 5：逐页生图
+## Step 5：逐页配图
 
-### 视觉描述写法规范（生图 Prompt）
+### 铁律6：生图 Key 检查（必须在所有生图之前执行一次）
 
-结构：`主体 + 场景/背景 + 动作/状态 + 风格 + 色调 + 构图`
+如果偏好中已设置外部 provider：
+1. 搜索笔记库中标题含 `图像生成 Key` 的笔记，找到对应 provider 的 `ciphertext_b64`
+2. 找到 → 用 **note 模式**（`--key note:{笔记ID} --ciphertext {密文}`）
+3. 找不到 → 询问用户：「没有找到你的 {provider} Key，有以下选项：A. 提供临时 Key B. 换内置生图工具」
+   - **严禁静默降级**，必须明确告知用户后才能切换
 
-风格词参考（按内容类型选择）：
-- 干货教程 → `简约扁平插画风`、`信息图表风格`、`清新白底配色`
-- 经验分享 → `生活感摄影风`、`温暖日系风格`、`自然光写实`
-- 知识科普 → `科技感线条插画`、`教科书配图风格`
-- 情感故事 → `电影画面感`、`胶片温暖色调`、`情绪氛围感`
+---
 
-色调建议：小红书主流 `奶油色 / 莫兰迪色 / 高饱和清新色`
+### 每页配图决策（按此顺序判断，不可跳过）
 
-示例：`一个女生坐在咖啡馆窗边阅读笔记本，午后阳光，日系胶片风格，暖橙色调，竖版特写构图`
+```
+铁律0 已读取到该页原文图片（read-image base64）？
+├─ 是 → 【方式A】原图 + 文案 → 排版生图（首选）
+│        ├─ provider 支持垫图（openrouter / gemini）→ 直接执行
+│        └─ provider 不支持本地垫图（ark 仅支持 URL / dashscope 不支持）→ 降级方式B
+└─ 否 → 【方式B】纯文生图（兜底）
+```
 
-### 生图执行
+用户明确说"重新生图""换个风格""不用原图"→ 才允许跳过方式A直接用方式B。
 
-**优先使用 `image_gen.py`（外部服务，质量更高）**，失败则降级到内置工具。
+---
 
-#### 方法一：image_gen.py（优先）
+### 【方式A】原图 + 文案 → 排版生图（首选）
 
-provider 从偏好中读取，模型固定不可修改：
+**核心思路**：把原文图片 + 当页文案同时传给生图 AI，AI 直接输出排好版的小红书竖版卡片图。AI 拿着你的图、拿着你的文，负责排版。
 
-| provider | 模型（硬编码） |
-|----------|-------------|
-| openrouter | `google/gemini-3.1-flash-image-preview` |
-| dashscope | `qwen-image-2.0-pro` |
-| ark（即梦） | `doubao-seedream-5-0-260128` |
-| gemini | `gemini-3-pro-image-preview` |
+**执行步骤**：
 
-**有保存的 Key（note 模式）：**
 ```bash
-python3 comm_script/image_gen.py \
-    --provider "{偏好中的provider}" \
-    --model "{对应模型，见上表}" \
-    --key "note:{图像生成Key笔记的note_id}" \
-    --ciphertext "{对应provider的ciphertext_b64}" \
-    --prompt "{视觉描述}" \
+# Step 1：将 read-image 取到的 base64 存为临时文件
+python3 -c "
+import base64
+data = '{从read-image取到的完整base64字符串}'
+with open('/tmp/ref_p{页码}.jpg', 'wb') as f:
+    f.write(base64.b64decode(data))
+print('saved')
+"
+
+# Step 2：把原图 + 排版文案一起传给生图 AI
+python3 scripts/image_gen.py \
+    --provider "{偏好provider}" \
+    --model "{对应模型，见下表}" \
+    --key "note:{key笔记id}" --ciphertext "{密文}" \
+    --image /tmp/ref_p{页码}.jpg \
+    --prompt "小红书竖版卡片排版，3:4 比例。
+页面标题（大字居中）：{当页标题}
+正文内容：{当页文案，不超过80字}
+风格：参考输入图片的画风、色调和视觉元素，保持一致。
+要求：文字清晰可读，留白充足，符合小红书视觉审美。" \
     --aspect "3:4" \
     --out "./output"
 ```
 
-**无保存的 Key（临时模式）：**
+provider 对应模型（硬编码，不可修改）：
+
+| provider | 模型 | 是否支持本地文件垫图 |
+|----------|------|------------------|
+| openrouter | `google/gemini-3.1-flash-image-preview` | ✅ 支持 |
+| gemini | `gemini-3-pro-image-preview` | ✅ 支持 |
+| ark（即梦） | `doubao-seedream-5-0-260128` | ❌ 仅支持公网 URL |
+| dashscope | `qwen-image-2.0-pro` | ❌ 不支持垫图 |
+
+> ark / dashscope 遇到有原图的页面 → 自动降级【方式B】，把图片视觉描述（铁律0中已记录）加入 prompt
+
+---
+
+### 【方式B】纯文生图（兜底）
+
+原文无图 / provider 不支持垫图 / 用户要求重新生图时使用。
+
 ```bash
-python3 comm_script/image_gen.py \
-    --provider "{provider}" \
+python3 scripts/image_gen.py \
+    --provider "{偏好provider}" \
     --model "{对应模型}" \
-    --key "{用户提供的Key}" \
-    --prompt "{视觉描述}" \
+    --key "note:{key笔记id}" --ciphertext "{密文}" \
+    --prompt "小红书竖版卡片排版，3:4 比例。
+页面标题（大字居中）：{当页标题}
+正文内容：{当页文案，不超过80字}
+视觉风格：{若有原图描述则写：参考此风格——{铁律0中记录的该图视觉描述}；否则：简约插画风，奶油色调}
+要求：文字清晰可读，留白充足，符合小红书视觉审美。" \
     --aspect "3:4" \
     --out "./output"
 ```
 
-> 小红书标准比例 `3:4`（`--aspect 3:4`）
-
-**偏好中未设置 provider / 用户没有外部 Key** → 跳至方法二。
-
-#### 方法二：内置工具（降级）
-
+**内置工具降级（image_gen.py 无法使用时）**：
 ```bash
 wpsnote-cli gen-image \
-    --prompt "{视觉描述}" \
-    --width 1080 --height 1350 \
-    --json
+    --prompt "{排版指令+文案}" \
+    --width 1080 --height 1350 --json
 ```
+或 MCP：`generate_image({ prompt: "...", width: 1080, height: 1350 })`
 
-或 MCP：`generate_image({ prompt: "{视觉描述}", width: 1080, height: 1350 })`
-
-> ⚠️ 生图限速每分钟 1 张，多页生成前告知用户预计耗时（页数 × 约 60 秒）
-
-### 首次生图前：检查 Key
-
-如果偏好中已设置 provider，生图前先执行 Key 检查流程（参考 image-gen skill 的 Step 3）：
-- 搜索 `图像生成 Key` 笔记，找到对应 provider 的密文 → 直接用 note 模式
-- 找不到 → 询问用户是否提供外部 Key，不提供则降级到内置工具
+> ⚠️ 内置工具限速每分钟 1 张，多页生成前告知用户预计耗时（页数 × 约 60 秒）
 
 ### 配图回填步骤
 
