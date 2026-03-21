@@ -57,14 +57,29 @@ metadata:
 ### 5. 生图必须优先使用原文图片垫图
 
 **有原文图片时，禁止直接文生图：**
-1. Step 2 读取源笔记时，必须调用 `get_note_outline` 扫描所有 `image` block，用 `read_image` 获取 base64，按位置记录
-2. 生图时，根据页面位置就近选取一张原文图片作为垫图（`--image`）
-3. 只有在以下情况才允许纯文生图：
+1. Step 2 读取源笔记时，必须扫描所有 `image` block，优先用 CLI 读取 base64 并**立刻用视觉理解描述图片内容**（见 Step 2 第 3 步）：
+   ```bash
+   wpsnote-cli read-image --note_id {note_id} --block_id {block_id} --json
+   # 返回 data.image_base64 字段
+   ```
+   MCP 降级：`read_image({ note_id, block_id })`
+2. 生图时，根据页面内容就近选取一张原文图片作为垫图：
+   ```bash
+   # 先将 base64 保存为临时文件
+   python3 -c "import base64; open('/tmp/ref_pN.jpg','wb').write(base64.b64decode('{data.image_base64}'))"
+   # 再传入 --image
+   python3 scripts/image_gen.py ... --image /tmp/ref_pN.jpg
+   ```
+3. **视觉描述（prompt）必须基于图片的真实画面来写**，不是凭空编写氛围图：
+   ```
+   ✅ 原图是：男生坐在电脑前，周围漂浮着笔记软件图标，困惑表情，线条插画风
+      → prompt：年轻男生坐在书桌前，Notion/Obsidian图标环绕飘散，眉头紧皱，同款线条插画风，奶油色调，竖版构图
+   ❌ 凭空写：温馨书房，女生整理笔记，日系风格（完全不参考原图）
+   ```
+4. 只有在以下情况才允许纯文生图：
    - 原文没有图片
    - provider 是 dashscope（不支持垫图）
    - provider 是 ark（即梦）且只有本地图片（ark 只支持公网 URL）
-
-**垫图 = 风格参考，不是直接复制**：AI 看原文图片的画风、色调、构图方式，生成与之风格一致的新图。
 
 ### 3. WPS 笔记写入规范（违反必报错）
 
@@ -132,10 +147,20 @@ metadata:
 获取笔记标识后：
 1. 使用 `search_notes` 或 `get_note_outline` 定位笔记
 2. 使用 `read_note` 读取完整内容
-3. **扫描原文图片（重要）**：
-   - 调用 `get_note_outline` 找出所有 `image` 类型的 block
-   - 对每张图片调用 `read_image(note_id, block_id)` 获取 base64 内容，**按页面顺序记录**
-   - 将图片列表附加到规划结果，格式：`[图片1: block_id={id} base64长度={n}字符，位置第{N}页附近, ...]`
+3. **扫描并理解原文图片（重要）**：
+   - 调用 `get_note_outline` / `wpsnote-cli outline --note_id {id} --json` 找出所有 `image` 类型的 block
+   - 对每张图片，优先用 CLI 读取（降级用 MCP）：
+     ```bash
+     wpsnote-cli read-image --note_id {note_id} --block_id {block_id} --json
+     ```
+     MCP 降级：`read_image({ note_id, block_id })`
+   - **读到 base64 后，立刻用视觉理解描述这张图的画面内容**，记录格式：
+     ```
+     图片1：block_id=xxx，位置第N页附近
+       画面内容：{描述图里有什么：人物/场景/元素/布局}
+       风格色调：{插画/摄影/扁平/日系/科技感/色调}
+       可用于：P{页码}（与该页主题最相关）
+     ```
    - 没有图片 → 记录"无原文图片，使用纯文生图"
 4. 分析以下要素：
    - 核心主题（1句话）
