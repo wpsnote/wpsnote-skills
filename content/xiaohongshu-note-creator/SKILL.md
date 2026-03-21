@@ -92,14 +92,19 @@ metadata:
 获取笔记标识后：
 1. 使用 `search_notes` 或 `get_note_outline` 定位笔记
 2. 使用 `read_note` 读取完整内容
-3. 分析以下要素：
+3. **扫描原文图片（重要）**：
+   - 调用 `get_note_outline` 找出所有 `image` 类型的 block
+   - 对每张图片调用 `read_image(note_id, block_id)` 获取 base64 内容，**按页面顺序记录**
+   - 将图片列表附加到规划结果，格式：`[图片1: block_id={id} base64长度={n}字符位置第{N}页附近, ...]`
+   - 没有图片 → 记录"无原文图片，使用纯文生图"
+4. 分析以下要素：
    - 核心主题（1句话）
    - 关键知识点（3-7个）
    - 内容类型（干货教程 / 经验分享 / 知识科普 / 情感故事）
    - 受众画像（初学者 / 有经验者 / 特定人群）
    - 适合转化的亮点
 
-告知用户：「已读取笔记《{标题}》，识别为「{内容类型}」，核心是「{主题}」，准备规划图文结构。」
+告知用户：「已读取笔记《{标题}》，识别为「{内容类型}」，核心是「{主题}」。原文含 {N} 张图片，将优先用于垫图生成配图。」
 
 ---
 
@@ -204,18 +209,55 @@ metadata:
 
 **优先使用 `image_gen.py`（外部服务，质量更高）**，失败则降级到内置工具。
 
+#### 垫图优先策略（核心规则）
+
+**有原文图片时，必须优先垫图，不得直接文生图：**
+
+1. 根据页面主题，从 Step 2 记录的原文图片列表中，**选取内容最相关的 1 张**作为垫图
+2. 垫图来源决定使用方式：
+   - `read_image` 获取的 base64 → 先保存为本地临时文件（`/tmp/ref_p{N}.jpg`）→ 传 `--image /tmp/ref_p{N}.jpg`（openrouter / gemini 支持）
+   - **ark（即梦）不支持本地文件垫图**：遇到 ark provider 且仅有 base64 图片时，自动降级为纯文生图
+3. 如果原文图片多于页数，未被分配的图片可以重复使用（靠近位置优先）
+4. **无原文图片 / 无法取到 base64 / ark 限制** → 纯文生图（按视觉描述生成氛围图）
+
+**逐页生图的垫图分配示例：**
+```
+原文图片：[img1(P2附近), img2(P5附近)]
+P1 封面 → 无最近原文图，纯文生图
+P2      → 用 img1 垫图
+P3/P4   → 用 img1 垫图（最近）
+P5      → 用 img2 垫图
+P6+     → 用 img2 垫图（最近）
+```
+
 #### 方法一：image_gen.py（优先）
 
 provider 从偏好中读取，模型固定不可修改：
 
-| provider | 模型（硬编码） |
-|----------|-------------|
-| openrouter | `google/gemini-3.1-flash-image-preview` |
-| dashscope | `qwen-image-2.0-pro` |
-| ark（即梦） | `doubao-seedream-5-0-260128` |
-| gemini | `gemini-3-pro-image-preview` |
+| provider | 模型（硬编码） | 垫图支持 |
+|----------|-------------|---------|
+| openrouter | `google/gemini-3.1-flash-image-preview` | ✅ 本地文件 |
+| dashscope | `qwen-image-2.0-pro` | ❌ 不支持 |
+| ark（即梦） | `doubao-seedream-5-0-260128` | ✅ 仅公网 URL |
+| gemini | `gemini-3-pro-image-preview` | ✅ 本地文件 |
 
-**有保存的 Key（note 模式）：**
+**垫图模式（provider 支持 + 有原文图）：**
+```bash
+# 先将 read_image 获取的 base64 保存为临时文件
+python3 -c "import base64; open('/tmp/ref_p{N}.jpg','wb').write(base64.b64decode('{base64内容}'))"
+
+python3 comm_script/image_gen.py \
+    --provider "{偏好中的provider}" \
+    --model "{对应模型，见上表}" \
+    --key "note:{图像生成Key笔记的note_id}" \
+    --ciphertext "{对应provider的ciphertext_b64}" \
+    --prompt "{视觉描述}" \
+    --image "/tmp/ref_p{N}.jpg" \
+    --aspect "3:4" \
+    --out "./output"
+```
+
+**纯文生图模式（无原文图 / dashscope / ark 限制）：**
 ```bash
 python3 comm_script/image_gen.py \
     --provider "{偏好中的provider}" \
@@ -227,16 +269,7 @@ python3 comm_script/image_gen.py \
     --out "./output"
 ```
 
-**无保存的 Key（临时模式）：**
-```bash
-python3 comm_script/image_gen.py \
-    --provider "{provider}" \
-    --model "{对应模型}" \
-    --key "{用户提供的Key}" \
-    --prompt "{视觉描述}" \
-    --aspect "3:4" \
-    --out "./output"
-```
+**无保存的 Key（临时模式）同上，`--key` 改为直接传 Key 字符串，可视情况加 `--image`。**
 
 > 小红书标准比例 `3:4`（`--aspect 3:4`）
 
