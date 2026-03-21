@@ -301,13 +301,14 @@ MCP 降级：`read_image({ note_id, block_id })`
 
 ```
 铁律0 已读取到该页原文图片（read-image base64）？
-├─ 是 → 【方式A】原图 + 文案 → 排版生图（首选）
-│        ├─ provider 支持垫图（openrouter / gemini）→ 直接执行
-│        └─ provider 不支持本地垫图（ark 仅支持 URL / dashscope 不支持）→ 降级方式B
-└─ 否 → 【方式B】纯文生图（兜底）
+├─ 是 → provider 支持垫图（openrouter / gemini）？
+│        ├─ 是 → 【方式A】原图 + 文案 → 排版生图
+│        └─ 否（ark / dashscope）→ ⛔ 跳过，该页不配图，占位文字保留
+└─ 否（原文无图）→ 【方式B】纯文生图（兜底）
 ```
 
-用户明确说"重新生图""换个风格""不用原图"→ 才允许跳过方式A直接用方式B。
+- **ark / dashscope 遇到有原图的页面：直接跳过，不降级文生图，不生任何图**
+- 用户明确说"重新生图""不用原图"→ 才允许对该页改用方式B
 
 ---
 
@@ -348,16 +349,14 @@ provider 对应模型（硬编码，不可修改）：
 |----------|------|------------------|
 | openrouter | `google/gemini-3.1-flash-image-preview` | ✅ 支持 |
 | gemini | `gemini-3-pro-image-preview` | ✅ 支持 |
-| ark（即梦） | `doubao-seedream-5-0-260128` | ❌ 仅支持公网 URL |
-| dashscope | `qwen-image-2.0-pro` | ❌ 不支持垫图 |
-
-> ark / dashscope 遇到有原图的页面 → 自动降级【方式B】，把图片视觉描述（铁律0中已记录）加入 prompt
+| ark（即梦） | `doubao-seedream-5-0-260128` | ❌ 不支持 → 跳过该页 |
+| dashscope | `qwen-image-2.0-pro` | ❌ 不支持 → 跳过该页 |
 
 ---
 
-### 【方式B】纯文生图（兜底）
+### 【方式B】纯文生图（原文无图时使用）
 
-原文无图 / provider 不支持垫图 / 用户要求重新生图时使用。
+原文该页本身没有图片 / 用户明确要求重新生图时使用。ark / dashscope 用户有原图的页面不走此路径。
 
 ```bash
 python3 scripts/image_gen.py \
@@ -367,7 +366,7 @@ python3 scripts/image_gen.py \
     --prompt "小红书竖版卡片排版，3:4 比例。
 页面标题（大字居中）：{当页标题}
 正文内容：{当页文案，不超过80字}
-视觉风格：{若有原图描述则写：参考此风格——{铁律0中记录的该图视觉描述}；否则：简约插画风，奶油色调}
+视觉风格：简约插画风，奶油色调
 要求：文字清晰可读，留白充足，符合小红书视觉审美。" \
     --aspect "3:4" \
     --out "./output"
