@@ -86,6 +86,7 @@ comm_script/                     # 公共脚本（跨 Skill 复用）
   image_gen.py                   # 统一图像生成脚本，支持 OpenRouter / 百炼 / 火山方舟 / Gemini，内置 AES Key 加密管理
 
 search/                          # 搜索与阅读
+  content-digest/                # 万能内容提炼：URL/图片/PDF/粘贴文本 → 结构化知识笔记
   news-to-note/                  # 新闻智能解读与知识库关联
   wps-note-intelligent-search/   # 智能深度搜索，跨笔记关联挖掘
   literature-reader/             # 学术文献阅读与结构化概要生成
@@ -173,6 +174,7 @@ skill-creator/                   # 工具：Skill 创建、迭代与评估
 
 | Skill | 说明 |
 |-------|------|
+| `content-digest` | 万能内容提炼，将任意来源（URL、图片、PDF、粘贴文本）转化为结构化知识笔记，支持多篇合并、全来源图片视觉解读 |
 | `news-to-note` | 新闻智能解读，搜索笔记库找关联内容，产出个性化 insight 分析，也支持批量写入简报 |
 | `wps-note-intelligent-search` | 深度搜索，跨笔记关联挖掘与知识图谱构建，不同于简单关键词搜索 |
 | `literature-reader` | 学术文献阅读与结构化概要生成，支持 PDF 论文元信息提取、方法论梳理、多篇横向对比 |
