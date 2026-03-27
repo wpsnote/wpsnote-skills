@@ -1,58 +1,74 @@
 ---
-name: insight-recaller
+name: ie-recall-memory
 author: Loki Mao (赛博小熊猫 Loki)
-description: 当用户在 WPS 里写新内容、做专题复习、准备讲稿或整理研究思路时，希望把过去真正有用的旧笔记重新召回到眼前，就使用此 Skill。它更适合“现在最该想起什么”，而不是做完整的笔记建链。
+description: “Selectively recalls the most relevant prior WPS notes for a current writing task, study session, or research thread. Use when the user is drafting new content, preparing a presentation, doing topic review, or organizing research and wants to surface past notes worth re-reading — focuses on 'what should I remember right now' rather than full cross-note mapping.”
 ---
 
 # WPS Insight Recaller 2.0
+
+Selectively recall the most valuable prior WPS notes for the user's current task. This is not a general search — it answers “what past notes are worth re-reading right now?”
 
 Follow the shared workflow in [../wps-learning-workflow.md](../wps-learning-workflow.md).
 
 ## Inputs
 
-- 当前正在处理的一篇 WPS 笔记、写作任务或复习主题
-- 可能相关的旧 WPS 笔记
-- 可选的时间范围或任务上下文
+| Input | Required | Description |
+|-------|----------|-------------|
+| Current note or task | Yes | The WPS note, writing task, or study topic being worked on |
+| Candidate old notes | Yes | Prior WPS notes that may be relevant |
+| Time range or context | No | Optional scope filter (e.g. “this semester”, “project X”) |
 
-## Output
+## Workflow
 
-A structured WPS-ready 选择性召回结果，指出当前最值得重看的旧笔记和可直接复用的内容。
+1. **Read the current note** — identify the core topic, open questions, and what the user is trying to accomplish
+2. **Search prior notes** — use `wpsnote-cli find` or `search_notes` to locate candidates by topic, tags, or keywords
+3. **Rank by immediate usefulness** — prioritize notes the user can act on now, not just topically similar ones
+4. **Extract reusable content** — identify specific paragraphs, examples, or frameworks worth pulling forward
+5. **Write the recall report** — output the structured result directly into WPS or present to user
 
-## What this skill should produce
+## Output Structure
 
-重点不是“多找一些相似笔记”，而是召回当下最有价值的旧内容。
+Produce a structured WPS-ready recall report with these sections:
 
-建议包含这些部分：
+1. **Most useful prior notes now** — ranked list of 3–5 notes, each with its WPS title
+2. **Why each is worth recalling** — one sentence per note explaining current relevance
+3. **How it connects to the current task** — map each recalled note to a specific part of the current work
+4. **What can be reused directly** — exact paragraphs, frameworks, or examples to pull forward
+5. **Where to insert or link it** — suggest placement in the current note
 
-1. `most useful prior notes now`
-2. `why each is worth recalling`
-3. `how it connects to the current task`
-4. `what can be reused directly`
-5. `where to insert or link it`
+### Example output snippet
 
-This skill should recall useful prior notes, not perform full cross-note mapping.
+```markdown
+## 召回结果
+
+### 1. 《分布式系统一致性笔记》
+- **为什么现在有用**：当前写的 CAP 定理分析直接依赖这篇的 Paxos 对比
+- **可直接复用**：第三节的”三种一致性模型对比表”可整段引入
+- **建议插入位置**：当前笔记”理论背景”章节之后
+- **置信度**：Confirmed from notes
+```
 
 ## WPS-first rules
 
-- 输出时要写明旧笔记标题，方便用户直接在 WPS 里找到。
-- 如果拿不到原段落，就做可信的概括，不要伪装成精确引用。
-- 召回数量宁少勿滥，优先高价值内容。
+- Always include the exact WPS note title so the user can find it directly
+- If the original paragraph is not accessible, provide a faithful summary — never disguise inference as an exact quote
+- Keep recall count small (3–5 notes max) — prioritize quality over quantity
+- Use the confidence labels from the shared workflow: `Confirmed from notes`, `Likely inference`, `Still missing`
 
 ## Quality rules
 
-- 优先挑“现在就用得上”的旧笔记，而不是“有点像”的旧笔记。
-- 尽量在理论、对比、案例之间做平衡，不要只召回同一种内容。
-- 对“可直接复用”和“适合后面展开”的内容要区分清楚。
+- Prioritize notes the user can act on immediately over notes that are merely topically similar
+- Balance across content types — mix theory, comparisons, and examples rather than recalling only one kind
+- Clearly separate “reuse directly now” from “worth expanding on later”
+- Each recalled note must have a specific connection to the current task — no generic “related to your topic” entries
 
 ## Do not use when
 
-- 目标是建立明确的笔记双链或关系图
-- 用户真正想做的是大范围综述，而不是选择性召回
-- 没有足够有意义的旧笔记可供召回
+- The goal is to build explicit bi-directional note links or a relationship graph → use `study-note-linker`
+- The user wants a broad literature review, not selective recall
+- There are not enough meaningful prior notes to recall from
 
 ## Recommended next skill
 
-Usually recommend:
-
-- `study-note-linker`
-- `class-note-builder`
+- `study-note-linker` — to formalize the connections discovered here into a knowledge network
+- `class-note-builder` — to restructure recalled content into a coherent study note
