@@ -2,7 +2,7 @@
 
 [![WPS 笔记首页](https://img.shields.io/badge/WPS笔记-首页-blue?style=flat-square)](https://ainote.kdocs.cn/)
 [![下载 WPS 笔记](https://img.shields.io/badge/WPS笔记-下载-green?style=flat-square)](https://ainote.kdocs.cn/wps-notes-hub/)
-[![加入交流群](https://img.shields.io/badge/微信-加入交流群-07C160?style=flat-square&logo=wechat)](https://p.kdocs.cn/s/V6MQOIJGADQHG)
+[![加入交流群](https://img.shields.io/badge/微信-加入交流群-07C160?style=flat-square&logo=wechat)](https://365.kdocs.cn/l/cau3Z9vsAUQt)
 
 笔记，是思想落地的地方。
 
