@@ -2,7 +2,7 @@
   "id": "tag-organize-golden-skip-ambiguous-notes",
   "suite": "golden",
   "skill": "tag-organize",
-  "prompt": "我先拿标题里带 tag-e2e-003 的几篇笔记试一下标签整理。请给主题明确的笔记补上合适标签，但对看不出主题的那篇保持原样，并在结果里说明它为什么被跳过。",
+  "prompt": "我这一批旧笔记也顺手帮我补补标签吧，能看出来是什么的就整理一下，看不出来的先放着。",
   "seed": {
     "description": "通过 MCP 预置一篇主题明确笔记、一篇意图不明笔记和一篇无关对照笔记。",
     "entities": [

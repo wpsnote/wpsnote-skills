@@ -1,0 +1,175 @@
+{
+  "id": "wpsnote-beautifier-golden-boundary-short-note",
+  "suite": "golden",
+  "skill": "wpsnote-beautifier",
+  "prompt": "这条就两三句，你帮我顺顺格式，别给我改太花。",
+  "seed": {
+    "description": "通过 MCP 预置一篇复杂复盘笔记、一篇简单提醒笔记、一篇超短杂乱笔记和一篇无关控制笔记。",
+    "entities": [
+      "notes.complex_note",
+      "notes.simple_note",
+      "notes.short_messy_note",
+      "notes.control_note"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "short_messy_note",
+      "kind": "note_snapshot",
+      "path": "notes.short_messy_note"
+    },
+    {
+      "id": "complex_note",
+      "kind": "note_snapshot",
+      "path": "notes.complex_note"
+    },
+    {
+      "id": "simple_note",
+      "kind": "note_snapshot",
+      "path": "notes.simple_note"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    },
+    {
+      "id": "stats",
+      "kind": "title_match_count",
+      "path": "stats"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [
+      "notes.short_messy_note"
+    ],
+    "entities_expected_unchanged": [
+      "notes.complex_note",
+      "notes.simple_note",
+      "notes.control_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_equals",
+        "path": "notes.short_messy_note.heading_levels",
+        "value": [
+          "h1"
+        ],
+        "message": "短笔记只应提升到一级标题，不应过度分层"
+      },
+      {
+        "kind": "value_not_contains",
+        "path": "notes.short_messy_note.body_xml",
+        "value": "<h2>",
+        "message": "边界场景不应硬加二级标题"
+      },
+      {
+        "kind": "count_equals",
+        "path": "notes.short_messy_note.highlight_blocks",
+        "value": 1,
+        "message": "仅保留 1 个重点高亮块"
+      },
+      {
+        "kind": "count_between",
+        "path": "notes.short_messy_note.key_paragraphs",
+        "min": 1,
+        "max": 2,
+        "message": "短笔记应保持轻量正文，不扩写成冗长段落"
+      },
+      {
+        "kind": "value_contains_all",
+        "path": "notes.short_messy_note.key_paragraphs",
+        "values": [
+          "发布会时间定在周四 14:00。",
+          "地点 B1-3，记得带转接头。"
+        ],
+        "message": "原始核心信息必须保留，不得改坏原意"
+      },
+      {
+        "kind": "value_not_contains",
+        "path": "notes.short_messy_note.body_xml",
+        "value": "！！！",
+        "message": "应清理无意义噪声符号"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "按轻量格式整理",
+        "message": "最终回答应说明采用轻量排版策略"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.complex_note",
+        "message": "复杂笔记不应被误处理"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.simple_note",
+        "message": "简单提醒笔记不应被误处理"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.control_note",
+        "message": "控制笔记不能被污染"
+      }
+    ],
+    "tolerance_rules": [
+      {
+        "kind": "ignore_paths",
+        "paths": [
+          "notes.short_messy_note.metadata.updated_at",
+          "stats.collection_time"
+        ],
+        "label": "允许边界样例中的更新时间波动"
+      }
+    ]
+  },
+  "final_state_collectors": [
+    {
+      "id": "short_messy_note",
+      "kind": "note_snapshot",
+      "path": "notes.short_messy_note"
+    },
+    {
+      "id": "complex_note",
+      "kind": "note_snapshot",
+      "path": "notes.complex_note"
+    },
+    {
+      "id": "simple_note",
+      "kind": "note_snapshot",
+      "path": "notes.simple_note"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    },
+    {
+      "id": "stats",
+      "kind": "title_match_count",
+      "path": "stats"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "删除 run-beautifier-boundary 相关测试对象。"
+  }
+}

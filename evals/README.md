@@ -6,6 +6,13 @@
 
 - 只看最终结果，不看工具调度链、不看 trace、不评估中间推理过程。
 
+当前 P0 skill：
+
+- `tag-organize`
+- `wps-deep-search`
+- `news-to-note`
+- `wpsnote-beautifier`
+
 ## 三态模型
 
 每个 case 都围绕三种状态展开：
@@ -67,23 +74,22 @@ evals/
 
 首版建议只围绕这类 MCP 能力实现采集器：
 
-- `create_note` / `update_note_info`
-- `list_notes` / `search_notes` / `get_note_info`
-- `get_note_outline` / `read_note_content` / `read_section` / `read_blocks`
-- `list_tags` / `find_tags` / `get_notes_by_tag`
-- `add_note_tags` / `remove_note_tags` / `rename_tag`
-- `import_web_page`
+- `create_note` / `list_notes` / `get_note_info` / `search_notes`
+- `get_note_outline` / `read_note` / `read_section` / `read_blocks` / `search_note_content`
+- `find_tags` / `get_note_stats`
+- `edit_block` / `batch_edit` / `sync_note`
+- `web_search` / `batch_web_search` / `web_fetch`
 
 推荐的 collector 映射：
 
 - `note_snapshot`
-  使用 `get_note_info` + `read_note_content`，必要时补 `read_blocks`
+  使用 `get_note_info` + `read_note`，必要时补 `read_blocks`
 - `tag_tree`
-  使用 `list_tags` / `find_tags`
+  使用 `find_tags`
 - `title_match_count`
   使用 `list_notes` 或 `search_notes`
 - `query_corpus_snapshot`
-  使用 `search_notes`、`get_note_info`、`read_note_content`
+  使用 `search_notes`、`get_note_info`、`read_note`
 - `response_payload`
   解析 Agent 最终回答，不依赖 trace
 
@@ -155,9 +161,9 @@ python3 evals/scripts/tri_state_eval.py validate evals/cases
 
 ```bash
 python3 evals/scripts/tri_state_eval.py grade \
-  --case evals/cases/golden/doc-importer/create-rich-import.json \
-  --original evals/fixtures/doc-importer/create-rich-import.original.json \
-  --final evals/fixtures/doc-importer/create-rich-import.final.json
+  --case evals/cases/golden/news-to-note/save-linked-news-with-personal-insight.json \
+  --original evals/fixtures/news-to-note/save-linked-news-with-personal-insight.original.json \
+  --final evals/fixtures/news-to-note/save-linked-news-with-personal-insight.final.json
 ```
 
 输出 Markdown 报告：

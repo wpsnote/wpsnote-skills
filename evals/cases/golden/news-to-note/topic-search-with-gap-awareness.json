@@ -1,0 +1,191 @@
+{
+  "id": "news-to-note-golden-topic-search-with-gap-awareness",
+  "suite": "golden",
+  "skill": "news-to-note",
+  "prompt": "最近欧盟电池关税那条你帮我捋一下，对我手上采购单有啥影响？",
+  "seed": {
+    "description": "MCP 预置“有话题无链接”的新闻检索场景；知识库里故意混入采购跟进、周会纪要和一条地铁上随手记，模拟真实办公环境中信息不完整且笔记杂糅的边界输入。",
+    "entities": [
+      "fixture.topic_eu_battery_tariff",
+      "notes.procurement_followup_note",
+      "notes.weekly_meeting_note",
+      "notes.pocket_note"
+    ],
+    "state_fixtures": {
+      "original": "evals/fixtures/news-to-note/topic-search-with-gap-awareness.original.json",
+      "final": "evals/fixtures/news-to-note/topic-search-with-gap-awareness.final.json"
+    }
+  },
+  "original_state_collectors": [
+    {
+      "id": "topic_news_note",
+      "kind": "search_note_by_title",
+      "title": "欧盟拟上调动力电池进口关税（快讯汇总）"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.topic_news_note_title_match_count",
+      "title": "欧盟拟上调动力电池进口关税（快讯汇总）"
+    },
+    {
+      "id": "procurement_followup_note",
+      "kind": "note_snapshot",
+      "path": "notes.procurement_followup_note"
+    },
+    {
+      "id": "weekly_meeting_note",
+      "kind": "note_snapshot",
+      "path": "notes.weekly_meeting_note"
+    },
+    {
+      "id": "pocket_note",
+      "kind": "note_snapshot",
+      "path": "notes.pocket_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [
+      "notes.topic_news_note"
+    ],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.procurement_followup_note",
+      "notes.weekly_meeting_note",
+      "notes.pocket_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_equals",
+        "path": "notes.topic_news_note.title",
+        "value": "欧盟拟上调动力电池进口关税（快讯汇总）",
+        "message": "无链接话题也应沉淀成结构化新闻笔记"
+      },
+      {
+        "kind": "set_equals",
+        "path": "notes.topic_news_note.tags",
+        "value": [
+          "#新闻",
+          "#新闻//供应链"
+        ],
+        "message": "边界场景下仍需保留基础新闻标签策略"
+      },
+      {
+        "kind": "value_equals",
+        "path": "notes.topic_news_note.metadata.source",
+        "value": "web_search",
+        "message": "有话题无链接时应明确来源于搜索抓取"
+      },
+      {
+        "kind": "count_at_least",
+        "path": "notes.topic_news_note.key_paragraphs",
+        "value": 2,
+        "message": "写入新闻笔记至少要保留两条关键信息"
+      },
+      {
+        "kind": "value_equals",
+        "path": "stats.topic_news_note_title_match_count",
+        "value": 1,
+        "message": "同标题新闻笔记应只创建一次"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.hits",
+        "value": "procurement_followup_note",
+        "message": "应命中至少一条与采购相关的历史笔记"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.search_dimensions",
+        "value": "time_range",
+        "message": "边界场景应体现时间维度检索"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.uncovered_gaps",
+        "value": "缺少最近两周的供应商报价更新",
+        "message": "应明确告诉用户当前笔记库缺失的关键资料"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "先按通用影响做了判断",
+        "message": "关联不足时要明确降级口径而不是装作结论充分"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.weekly_meeting_note",
+        "message": "新闻检索解读不能改写原会议纪要"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.pocket_note",
+        "message": "边界流程也不能污染随手记"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.hits",
+        "value": "pocket_note",
+        "message": "随手记录不能被当成有效业务关联"
+      }
+    ],
+    "tolerance_rules": [
+      {
+        "kind": "ignore_paths",
+        "paths": [
+          "notes.topic_news_note.metadata.updated_at",
+          "stats.collection_time"
+        ],
+        "label": "允许边界场景下采集时间不同"
+      }
+    ]
+  },
+  "final_state_collectors": [
+    {
+      "id": "topic_news_note",
+      "kind": "note_snapshot",
+      "path": "notes.topic_news_note"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.topic_news_note_title_match_count",
+      "title": "欧盟拟上调动力电池进口关税（快讯汇总）"
+    },
+    {
+      "id": "procurement_followup_note",
+      "kind": "note_snapshot",
+      "path": "notes.procurement_followup_note"
+    },
+    {
+      "id": "weekly_meeting_note",
+      "kind": "note_snapshot",
+      "path": "notes.weekly_meeting_note"
+    },
+    {
+      "id": "pocket_note",
+      "kind": "note_snapshot",
+      "path": "notes.pocket_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 35
+  },
+  "cleanup": {
+    "description": "删除本次话题检索落库生成的新闻笔记与关联测试对象。"
+  }
+}

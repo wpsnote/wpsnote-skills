@@ -33,11 +33,11 @@ class TriStateEvalTests(unittest.TestCase):
                 errors = TRI_STATE_EVAL.validate_case(case)
                 self.assertEqual(errors, [])
 
-    def test_doc_importer_fixture_passes(self) -> None:
+    def test_news_to_note_fixture_passes(self) -> None:
         report = self._grade_fixture(
-            "doc-importer/create-rich-import.original.json",
-            "doc-importer/create-rich-import.final.json",
-            "golden/doc-importer/create-rich-import.json",
+            "news-to-note/save-linked-news-with-personal-insight.original.json",
+            "news-to-note/save-linked-news-with-personal-insight.final.json",
+            "golden/news-to-note/save-linked-news-with-personal-insight.json",
         )
         self.assertEqual(report["status"], "pass")
 
@@ -49,11 +49,11 @@ class TriStateEvalTests(unittest.TestCase):
         )
         self.assertEqual(report["status"], "pass")
 
-    def test_web_importer_fixture_passes(self) -> None:
+    def test_wpsnote_beautifier_fixture_passes(self) -> None:
         report = self._grade_fixture(
-            "web-importer/preserve-quotes-and-images.original.json",
-            "web-importer/preserve-quotes-and-images.final.json",
-            "golden/web-importer/preserve-quotes-and-images.json",
+            "wpsnote-beautifier/beautify-mixed-mainline.original.json",
+            "wpsnote-beautifier/beautify-mixed-mainline.final.json",
+            "golden/wpsnote-beautifier/beautify-mixed-mainline.json",
         )
         self.assertEqual(report["status"], "pass")
 
@@ -66,17 +66,36 @@ class TriStateEvalTests(unittest.TestCase):
         self.assertEqual(report["status"], "pass")
 
     def test_forbidden_change_on_control_note_fails(self) -> None:
-        case = load_json(ROOT / "evals" / "cases" / "golden" / "doc-importer" / "create-rich-import.json")
-        original = load_json(ROOT / "evals" / "fixtures" / "doc-importer" / "create-rich-import.original.json")
-        final = load_json(ROOT / "evals" / "fixtures" / "doc-importer" / "create-rich-import.final.json")
+        case = load_json(
+            ROOT
+            / "evals"
+            / "cases"
+            / "golden"
+            / "news-to-note"
+            / "save-linked-news-with-personal-insight.json"
+        )
+        original = load_json(
+            ROOT
+            / "evals"
+            / "fixtures"
+            / "news-to-note"
+            / "save-linked-news-with-personal-insight.original.json"
+        )
+        final = load_json(
+            ROOT
+            / "evals"
+            / "fixtures"
+            / "news-to-note"
+            / "save-linked-news-with-personal-insight.final.json"
+        )
 
         polluted = deepcopy(final)
-        polluted["notes"]["control_note"]["body_xml"] = "<p>被误改了</p>"
+        polluted["notes"]["random_note"]["body_xml"] = "<p>被误改了</p>"
 
         report = TRI_STATE_EVAL.build_report(case, original, polluted)
         self.assertEqual(report["status"], "assert_fail")
         joined_reasons = "\n".join(report["state_diff_report"]["failed_reasons"])
-        self.assertIn("控制笔记", joined_reasons)
+        self.assertIn("无关随手记", joined_reasons)
 
     def _grade_fixture(self, original_rel: str, final_rel: str, case_rel: str) -> dict:
         case = load_json(ROOT / "evals" / "cases" / case_rel)

@@ -1,0 +1,193 @@
+{
+  "id": "news-to-note-golden-save-linked-news-with-personal-insight",
+  "suite": "golden",
+  "skill": "news-to-note",
+  "prompt": "这条新闻你帮我看下，跟我们模型成本这块有没有关系？https://fixture.local/news/openai-pricing-shift-2026",
+  "seed": {
+    "description": "MCP 预置一条可抓取新闻链接；同时笔记库里混着项目成本草稿、昨晚基础设施例会纪要和一条完全无关的跑步随手记，模拟工作场景里常见的杂乱输入。",
+    "entities": [
+      "fixture.news_openai_pricing_shift_2026",
+      "notes.model_budget_note",
+      "notes.infra_meeting_note",
+      "notes.random_note"
+    ],
+    "state_fixtures": {
+      "original": "evals/fixtures/news-to-note/save-linked-news-with-personal-insight.original.json",
+      "final": "evals/fixtures/news-to-note/save-linked-news-with-personal-insight.final.json"
+    }
+  },
+  "original_state_collectors": [
+    {
+      "id": "news_note",
+      "kind": "search_note_by_title",
+      "title": "OpenAI 调整 API 定价策略：企业版进一步下探（2026-04-22）"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.news_note_title_match_count",
+      "title": "OpenAI 调整 API 定价策略：企业版进一步下探（2026-04-22）"
+    },
+    {
+      "id": "model_budget_note",
+      "kind": "note_snapshot",
+      "path": "notes.model_budget_note"
+    },
+    {
+      "id": "infra_meeting_note",
+      "kind": "note_snapshot",
+      "path": "notes.infra_meeting_note"
+    },
+    {
+      "id": "random_note",
+      "kind": "note_snapshot",
+      "path": "notes.random_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [
+      "notes.news_note"
+    ],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.model_budget_note",
+      "notes.infra_meeting_note",
+      "notes.random_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_equals",
+        "path": "notes.news_note.title",
+        "value": "OpenAI 调整 API 定价策略：企业版进一步下探（2026-04-22）",
+        "message": "新闻解读必须以新闻原题创建落库笔记"
+      },
+      {
+        "kind": "set_equals",
+        "path": "notes.news_note.tags",
+        "value": [
+          "#新闻",
+          "#新闻//AI",
+          "#成本管理"
+        ],
+        "message": "新闻笔记标签应包含通用新闻标签和业务语义标签"
+      },
+      {
+        "kind": "value_equals",
+        "path": "notes.news_note.source_url",
+        "value": "https://fixture.local/news/openai-pricing-shift-2026",
+        "message": "新闻笔记必须保留原始来源链接"
+      },
+      {
+        "kind": "value_contains_all",
+        "path": "notes.news_note.key_paragraphs",
+        "values": [
+          "报道提到企业版 API 价格继续下探，同时把长上下文套餐改成按阶梯计费。",
+          "分析师判断这会迫使国内云厂商跟进调价，窗口期大概在一个季度内。"
+        ],
+        "message": "落库内容应保留新闻的核心事实段落"
+      },
+      {
+        "kind": "value_equals",
+        "path": "stats.news_note_title_match_count",
+        "value": 1,
+        "message": "同标题新闻笔记最终应唯一，避免重复写入"
+      },
+      {
+        "kind": "value_contains_all",
+        "path": "response.hits",
+        "values": [
+          "model_budget_note",
+          "infra_meeting_note"
+        ],
+        "message": "最终分析必须命中至少两篇真实业务关联笔记"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.search_dimensions",
+        "value": "cross_note_relation",
+        "message": "必须体现跨笔记关联检索维度"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.evidence",
+        "value": "Q3 预算会先锁推理成本上限",
+        "message": "必须引用用户历史笔记中的关键证据"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "建议把推理套餐和预留额度一起谈",
+        "message": "最终输出应给出可执行行动建议"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.random_note",
+        "message": "新闻解读流程不能改动无关随手记"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.hits",
+        "value": "random_note",
+        "message": "无关随手记不能被误判成关联证据"
+      }
+    ],
+    "tolerance_rules": [
+      {
+        "kind": "ignore_paths",
+        "paths": [
+          "notes.news_note.metadata.updated_at",
+          "stats.collection_time"
+        ],
+        "label": "允许采集时间戳波动"
+      }
+    ]
+  },
+  "final_state_collectors": [
+    {
+      "id": "news_note",
+      "kind": "note_snapshot",
+      "path": "notes.news_note"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.news_note_title_match_count",
+      "title": "OpenAI 调整 API 定价策略：企业版进一步下探（2026-04-22）"
+    },
+    {
+      "id": "model_budget_note",
+      "kind": "note_snapshot",
+      "path": "notes.model_budget_note"
+    },
+    {
+      "id": "infra_meeting_note",
+      "kind": "note_snapshot",
+      "path": "notes.infra_meeting_note"
+    },
+    {
+      "id": "random_note",
+      "kind": "note_snapshot",
+      "path": "notes.random_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 35
+  },
+  "cleanup": {
+    "description": "删除本次 run 写入的新闻笔记和新闻 fixture 关联对象。"
+  }
+}

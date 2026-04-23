@@ -1,0 +1,75 @@
+{
+  "notes": {
+    "complex_note": {
+      "title": "增长复盘（Q2）",
+      "tags": [
+        "#增长",
+        "#复盘"
+      ],
+      "body_xml": "<h1>增长复盘（Q2）</h1><h2>整体数据</h2><p>新用户转化率较上月提升 8%。</p><h2>问题</h2><p>首日留存在低价渠道仍有波动。</p>",
+      "key_paragraphs": [
+        "新用户转化率较上月提升 8%。",
+        "首日留存在低价渠道仍有波动。"
+      ],
+      "heading_levels": [
+        "h1",
+        "h2",
+        "h2"
+      ],
+      "highlight_blocks": [
+        "新用户转化率较上月提升 8%。"
+      ],
+      "quote_count": 1,
+      "hash": "beautifier-boundary-complex-001"
+    },
+    "simple_note": {
+      "title": "晚点把发票拍照",
+      "tags": [
+        "#待办"
+      ],
+      "body_xml": "<p>晚饭前把报销发票拍照传给财务。</p>",
+      "key_paragraphs": [
+        "晚饭前把报销发票拍照传给财务。"
+      ],
+      "hash": "beautifier-boundary-simple-001"
+    },
+    "short_messy_note": {
+      "title": "发布会提醒（草）",
+      "tags": [
+        "#会议",
+        "#速记"
+      ],
+      "body_xml": "<p>发布会时间定在周四14:00！！！</p><p>地点B1-3 记得带转接头</p><p>联系人 阿泽</p>",
+      "key_paragraphs": [
+        "发布会时间定在周四14:00！！！",
+        "地点B1-3 记得带转接头",
+        "联系人 阿泽"
+      ],
+      "heading_levels": [],
+      "highlight_blocks": [],
+      "quote_count": 0,
+      "metadata": {
+        "updated_at": "2026-04-22T11:00:00Z"
+      },
+      "hash": "beautifier-boundary-short-001"
+    },
+    "control_note": {
+      "title": "无关控制笔记-002",
+      "tags": [
+        "#control"
+      ],
+      "body_xml": "<p>给工位绿植浇水。</p>",
+      "key_paragraphs": [
+        "给工位绿植浇水。"
+      ],
+      "hash": "beautifier-boundary-control-001"
+    }
+  },
+  "response": {
+    "text": ""
+  },
+  "stats": {
+    "beautified_note_count": 0,
+    "collection_time": "2026-04-22T11:00:00Z"
+  }
+}

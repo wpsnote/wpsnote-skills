@@ -1,0 +1,157 @@
+{
+  "id": "wpsnote-beautifier-golden-fallback-locked-note",
+  "suite": "golden",
+  "skill": "wpsnote-beautifier",
+  "prompt": "这页我开了协作锁，你先尽量整理；改不了就告诉我怎么改。",
+  "seed": {
+    "description": "通过 MCP 预置一篇复杂结构笔记、一篇简单提醒笔记、一篇协作锁定的杂乱笔记和一篇无关控制笔记。",
+    "entities": [
+      "notes.complex_note",
+      "notes.simple_note",
+      "notes.locked_messy_note",
+      "notes.control_note"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "locked_messy_note",
+      "kind": "note_snapshot",
+      "path": "notes.locked_messy_note"
+    },
+    {
+      "id": "complex_note",
+      "kind": "note_snapshot",
+      "path": "notes.complex_note"
+    },
+    {
+      "id": "simple_note",
+      "kind": "note_snapshot",
+      "path": "notes.simple_note"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    },
+    {
+      "id": "stats",
+      "kind": "title_match_count",
+      "path": "stats"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.locked_messy_note",
+      "notes.complex_note",
+      "notes.simple_note",
+      "notes.control_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "path_unchanged",
+        "path": "notes.locked_messy_note",
+        "message": "锁定场景下原正文不能被半写入或改坏"
+      },
+      {
+        "kind": "path_missing",
+        "path": "notes.locked_messy_note_beautified",
+        "message": "失败/降级路径不应额外创建半成品笔记"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "没能直接改写这条笔记",
+        "message": "最终回答必须明确说明未直接改写"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "建议版结构",
+        "message": "降级后必须给出可执行的结构建议"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "一级标题：会议主题",
+        "message": "建议结构必须包含标题层级示例"
+      },
+      {
+        "kind": "count_at_least",
+        "path": "response.suggested_outline",
+        "value": 3,
+        "message": "降级结果应至少给出三条可用提纲"
+      },
+      {
+        "kind": "count_equals",
+        "path": "stats.beautified_note_count",
+        "value": 0,
+        "message": "锁定失败后不应计入成功美化数量"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.complex_note",
+        "message": "复杂但无关笔记不能被污染"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.simple_note",
+        "message": "简单笔记不能被污染"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.control_note",
+        "message": "控制笔记不能被污染"
+      }
+    ],
+    "tolerance_rules": []
+  },
+  "final_state_collectors": [
+    {
+      "id": "locked_messy_note",
+      "kind": "note_snapshot",
+      "path": "notes.locked_messy_note"
+    },
+    {
+      "id": "complex_note",
+      "kind": "note_snapshot",
+      "path": "notes.complex_note"
+    },
+    {
+      "id": "simple_note",
+      "kind": "note_snapshot",
+      "path": "notes.simple_note"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    },
+    {
+      "id": "stats",
+      "kind": "title_match_count",
+      "path": "stats"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "删除 run-beautifier-fallback 相关测试对象。"
+  }
+}

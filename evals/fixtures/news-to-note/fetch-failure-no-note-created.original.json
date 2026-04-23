@@ -1,0 +1,52 @@
+{
+  "notes": {
+    "ops_weekly_note": {
+      "title": "运维周报 4/22（故障后续）",
+      "tags": [
+        "#运维",
+        "#稳定性"
+      ],
+      "body_xml": "<h1>运维周报 4/22（故障后续）</h1><p>本周支付超时告警下降，但跨区回源延迟还没压到目标线。</p><p>要补一版多云切换演练计划，别只写结论。</p>",
+      "key_paragraphs": [
+        "本周支付超时告警下降，但跨区回源延迟还没压到目标线。",
+        "要补一版多云切换演练计划，别只写结论。"
+      ],
+      "hash": "ops-weekly-before"
+    },
+    "incident_meeting_note": {
+      "title": "支付抖动复盘会（语音转写）",
+      "tags": [
+        "#故障复盘",
+        "#支付链路"
+      ],
+      "body_xml": "<h1>支付抖动复盘会（语音转写）</h1><p>结论先记：根因是跨区切流和重试参数叠加，导致峰值时段放大。</p><p>周五前补完监控阈值和演练清单。</p>",
+      "key_paragraphs": [
+        "根因是跨区切流和重试参数叠加，导致峰值时段放大。",
+        "周五前补完监控阈值和演练清单。"
+      ],
+      "hash": "incident-meeting-before"
+    },
+    "random_note": {
+      "title": "午饭随手记",
+      "tags": [
+        "#生活"
+      ],
+      "body_xml": "<h1>午饭随手记</h1><p>今天那家牛肉粉比上周咸很多，下次换一家。</p>",
+      "key_paragraphs": [
+        "今天那家牛肉粉比上周咸很多，下次换一家。"
+      ],
+      "hash": "lunch-note-before"
+    }
+  },
+  "stats": {
+    "failed_news_note_title_match_count": 0,
+    "collection_time": "2026-04-22T06:10:00Z"
+  },
+  "response": {
+    "text": "",
+    "hits": [],
+    "evidence": [],
+    "search_dimensions": [],
+    "uncovered_gaps": []
+  }
+}

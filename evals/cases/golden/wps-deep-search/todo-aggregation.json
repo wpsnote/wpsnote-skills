@@ -2,7 +2,7 @@
   "id": "wps-deep-search-golden-todo-aggregation",
   "suite": "golden",
   "skill": "wps-deep-search",
-  "prompt": "我周一要开例会，帮我把北极星项目这组资料里还没完成的事项都梳理出来，按来源笔记归并，并附上原文证据。",
+  "prompt": "周一例会前我想把北极星还挂着的事都捞出来，你帮我扫一下散在哪几篇里。",
   "seed": {
     "description": "通过 MCP 预置日报、会议纪要、跟进清单三篇含待办语料，以及一篇生活类对照笔记，模拟用户会前梳理待办的场景。",
     "entities": [
@@ -59,10 +59,10 @@
       {
         "kind": "value_contains_all",
         "path": "response.evidence",
-        "values": [
-          "采购报价下周前完成",
-          "周五前回传时间表"
-        ],
+          "values": [
+            "报价表下周一前给采购",
+            "周五前把新时间表回传"
+          ],
         "message": "必须覆盖多来源待办证据"
       }
     ],

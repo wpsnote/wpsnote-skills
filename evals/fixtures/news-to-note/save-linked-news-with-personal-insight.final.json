@@ -1,0 +1,85 @@
+{
+  "notes": {
+    "model_budget_note": {
+      "title": "Q3 模型成本压降计划（会后补记）",
+      "tags": [
+        "#项目/Atlas",
+        "#AI预算"
+      ],
+      "body_xml": "<h1>Q3 模型成本压降计划（会后补记）</h1><p>上午预算会太赶，只记了关键句：Q3 预算会先锁推理成本上限，评估标准先按每千 token 控在 0.9 元以内。</p><p>模型能力先别继续扩，先把调用结构拆细，不然月底账单一定炸。</p><p>财务提醒：采购合同里要写清可回退套餐，不要只看展示价。</p>",
+      "key_paragraphs": [
+        "Q3 预算会先锁推理成本上限，评估标准先按每千 token 控在 0.9 元以内。",
+        "模型能力先别继续扩，先把调用结构拆细，不然月底账单一定炸。"
+      ],
+      "hash": "model-budget-before"
+    },
+    "infra_meeting_note": {
+      "title": "基础设施例会 4/21（语音转写未整理）",
+      "tags": [
+        "#会议",
+        "#云资源"
+      ],
+      "body_xml": "<h1>基础设施例会 4/21（语音转写未整理）</h1><p>昨晚会里确认云厂商报价里按阶梯价谈，不要只看首档单价；另外冷备资源的账单归属还没拍板。</p><p>SRE 说先把高峰流量切到新网关，至少把重试风暴压住。</p><p>下周一之前把采购条款草案给法务过目。</p>",
+      "key_paragraphs": [
+        "云厂商报价里按阶梯价谈，不要只看首档单价。",
+        "下周一之前把采购条款草案给法务过目。"
+      ],
+      "hash": "infra-meeting-before"
+    },
+    "random_note": {
+      "title": "晚跑随手记",
+      "tags": [
+        "#生活"
+      ],
+      "body_xml": "<h1>晚跑随手记</h1><p>今天 7 公里，后半程配速掉得有点厉害，可能是中午咖啡喝太晚。</p>",
+      "key_paragraphs": [
+        "今天 7 公里，后半程配速掉得有点厉害。"
+      ],
+      "hash": "random-run-note"
+    },
+    "news_note": {
+      "title": "OpenAI 调整 API 定价策略：企业版进一步下探（2026-04-22）",
+      "tags": [
+        "#新闻",
+        "#新闻//AI",
+        "#成本管理"
+      ],
+      "source_url": "https://fixture.local/news/openai-pricing-shift-2026",
+      "body_xml": "<h1>OpenAI 调整 API 定价策略：企业版进一步下探（2026-04-22）</h1><p><tag>#新闻</tag> <tag>#新闻//AI</tag> <tag>#成本管理</tag></p><p>报道提到企业版 API 价格继续下探，同时把长上下文套餐改成按阶梯计费。</p><p>分析师判断这会迫使国内云厂商跟进调价，窗口期大概在一个季度内。</p><p>企业客户新增了季度承诺包，超过阈值后单价下降，但违约补差条款更严格。</p>",
+      "key_paragraphs": [
+        "报道提到企业版 API 价格继续下探，同时把长上下文套餐改成按阶梯计费。",
+        "分析师判断这会迫使国内云厂商跟进调价，窗口期大概在一个季度内。",
+        "企业客户新增了季度承诺包，超过阈值后单价下降，但违约补差条款更严格。"
+      ],
+      "metadata": {
+        "source": "TechWire",
+        "published_at": "2026-04-22",
+        "updated_at": "2026-04-22T02:32:11Z"
+      },
+      "hash": "news-openai-pricing-after"
+    }
+  },
+  "stats": {
+    "news_note_title_match_count": 1,
+    "collection_time": "2026-04-22T02:33:00Z"
+  },
+  "response": {
+    "text": "这条新闻和你在成本会上定的方向是同一条线：你们内部已经在压推理上限，新闻里又出现了企业版阶梯计费和季度承诺包，议价窗口刚好打开。建议把推理套餐和预留额度一起谈，别只谈首档单价。",
+    "hits": [
+      "model_budget_note",
+      "infra_meeting_note"
+    ],
+    "evidence": [
+      "Q3 预算会先锁推理成本上限",
+      "云厂商报价里按阶梯价谈，不要只看首档单价"
+    ],
+    "search_dimensions": [
+      "topic",
+      "tags",
+      "cross_note_relation"
+    ],
+    "uncovered_gaps": [
+      "缺少最近一周的真实 token 消耗报表"
+    ]
+  }
+}

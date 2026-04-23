@@ -2,7 +2,7 @@
   "id": "wps-deep-search-golden-cross-note-association",
   "suite": "golden",
   "skill": "wps-deep-search",
-  "prompt": "我在写北极星项目的季度复盘，想把和 Q3 规划有关的内容都串起来看。请找出相关笔记，说明它们之间的关联，并附上能支撑判断的原文证据。",
+  "prompt": "我要写北极星这季度复盘，跟 Q3 规划沾边的东西你帮我串一串，看看是不是都指向同一件事。",
   "seed": {
     "description": "通过 MCP 预置规划草案、项目周报、风险清单三篇相关语料和一篇生活类对照语料，模拟真实的跨笔记复盘查询。",
     "entities": [
@@ -59,10 +59,10 @@
       {
         "kind": "value_contains_all",
         "path": "response.evidence",
-        "values": [
-          "里程碑延后两周",
-          "供应商交付存在风险"
-        ],
+          "values": [
+            "里程碑要往后挪两周",
+            "供应商交付还是最大风险"
+          ],
         "message": "必须给出跨笔记关联证据"
       }
     ],

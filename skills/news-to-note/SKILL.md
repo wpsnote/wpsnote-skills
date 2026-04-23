@@ -62,8 +62,8 @@ metadata:
 
 | 输入类型 | 获取方式 |
 |----------|----------|
-| 有 URL | `WebFetch` 抓取全文；失败回退 `WebSearch` |
-| 有话题无链接 | `WebSearch` 搜索 → 选最佳 1-2 篇 → `WebFetch` 抓取 |
+| 有 URL | `web_fetch` 抓取全文；失败回退 `web_search` |
+| 有话题无链接 | `web_search` 搜索 → 选最佳 1-2 篇 → `web_fetch` 抓取 |
 | 直接贴正文 | 直接使用，提取标题和来源 |
 
 清洗内容：去除导航栏、广告、评论区等非正文内容。
@@ -150,7 +150,7 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 用户说：「帮我看看这篇 https://36kr.com/p/xxx OpenAI融资的新闻」
 
 操作：
-1. `WebFetch` 抓取全文 → 提取标题"OpenAI 获 1100 亿美元融资"
+1. `web_fetch` 抓取全文 → 提取标题"OpenAI 获 1100 亿美元融资"
 2. `create_note` → `edit_block` 写入元信息和标签 → 分次追加正文段落 → `sync_note`
 3. `search_notes(keyword="OpenAI")` + `search_notes(keyword="AI 融资")` + `search_notes(keyword="大模型")` 检索知识库
 4. 发现用户有"AI 战略规划"笔记和"竞品分析"文档 → `read_note` 读取
@@ -163,7 +163,7 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 用户说：「DeepSeek 最近怎么样了」
 
 操作：
-1. `WebSearch("DeepSeek 最新动态 2026")` → 找到最权威报道 → `WebFetch` 抓取
+1. `web_search("DeepSeek 最新动态 2026")` → 找到最权威报道 → `web_fetch` 抓取
 2. 保存到笔记，打 `#新闻//AI` 标签
 3. `search_notes(keyword="DeepSeek")` + `search_notes(keyword="开源模型")` 检索知识库
 4. 发现用户之前保存过一篇"DeepSeek-V3 发布"的新闻 → 对比时间线
@@ -194,7 +194,7 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 
 ### 工作流 B
 
-1. `WebFetch` / `WebSearch` 获取新闻 → 2. `create_note` → 3. `edit_block(op="insert")` 写入元信息 → 4. **分次** `edit_block(op="insert")` 追加正文（每次 3-5 段，用 `last_block_id` 做锚点） → 5. `sync_note` → 6. 多组 `search_notes` 检索知识库 → 7. `read_note` / `read_section` 读取关联 → 8. 输出 insight
+1. `web_fetch` / `web_search` 获取新闻 → 2. `create_note` → 3. `edit_block(op="insert")` 写入元信息 → 4. **分次** `edit_block(op="insert")` 追加正文（每次 3-5 段，用 `last_block_id` 做锚点） → 5. `sync_note` → 6. 多组 `search_notes` 检索知识库 → 7. `read_note` / `read_section` 读取关联 → 8. 输出 insight
 
 始终遵循：定位 → 读取/刷新 → 写入。
 
@@ -206,7 +206,7 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 | `BLOCK_NOT_FOUND` | `get_note_outline` 刷新后重试 |
 | `DOCUMENT_READ_ONLY` | 停止写入，告知用户 |
 | 搜索结果为空（A） | 回报"无新增"，不写入空内容 |
-| 新闻获取失败（B） | 有链接回退 `WebSearch`；无链接扩大搜索；仍无则告知用户 |
+| 新闻获取失败（B） | 有链接回退 `web_search`；无链接扩大搜索；仍无则告知用户 |
 | 知识库无关联（B） | 正常保存，给通用分析，提示"随着笔记积累分析会更精准" |
 | 文章过长 | 分段写入；分析聚焦关键段落 |
 

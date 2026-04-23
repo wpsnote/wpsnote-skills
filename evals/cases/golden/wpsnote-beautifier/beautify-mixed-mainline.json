@@ -1,0 +1,183 @@
+{
+  "id": "wpsnote-beautifier-golden-beautify-mixed-mainline",
+  "suite": "golden",
+  "skill": "wpsnote-beautifier",
+  "prompt": "这页会议笔记又长又乱，你帮我整理成能直接给团队看的版式。",
+  "seed": {
+    "description": "通过 MCP 预置一篇复杂结构笔记、一篇简单提醒笔记、一篇杂乱混排会议笔记和一篇无关控制笔记。",
+    "entities": [
+      "notes.complex_note",
+      "notes.simple_note",
+      "notes.mixed_note",
+      "notes.control_note"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "mixed_note",
+      "kind": "note_snapshot",
+      "path": "notes.mixed_note"
+    },
+    {
+      "id": "complex_note",
+      "kind": "note_snapshot",
+      "path": "notes.complex_note"
+    },
+    {
+      "id": "simple_note",
+      "kind": "note_snapshot",
+      "path": "notes.simple_note"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    },
+    {
+      "id": "stats",
+      "kind": "title_match_count",
+      "path": "stats"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [
+      "notes.mixed_note"
+    ],
+    "entities_expected_unchanged": [
+      "notes.complex_note",
+      "notes.simple_note",
+      "notes.control_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_equals",
+        "path": "notes.mixed_note.heading_levels",
+        "value": [
+          "h1",
+          "h2",
+          "h2"
+        ],
+        "message": "杂乱笔记应被整理为明确的标题层级"
+      },
+      {
+        "kind": "count_equals",
+        "path": "notes.mixed_note.highlight_blocks",
+        "value": 2,
+        "message": "重点高亮块数量必须为 2"
+      },
+      {
+        "kind": "count_equals",
+        "path": "notes.mixed_note.quote_count",
+        "value": 2,
+        "message": "高亮块应落在引用/强调结构中"
+      },
+      {
+        "kind": "value_contains",
+        "path": "notes.mixed_note.body_xml",
+        "value": "<h2>风险与跟进</h2>",
+        "message": "正文结构必须包含二级标题分段"
+      },
+      {
+        "kind": "value_contains_all",
+        "path": "notes.mixed_note.key_paragraphs",
+        "values": [
+          "预算 4 月先卡在 120w，别再超了。",
+          "风险：安卓闪退还没收口，客服今天又催。",
+          "待办：周五前给市场确认新投放口径；运营把 FAQ 改掉。"
+        ],
+        "message": "原始关键信息必须完整保留，不能改坏正文含义"
+      },
+      {
+        "kind": "value_not_contains",
+        "path": "notes.mixed_note.body_xml",
+        "value": ">>>>",
+        "message": "杂乱占位符应被清理"
+      },
+      {
+        "kind": "count_equals",
+        "path": "stats.beautified_note_count",
+        "value": 1,
+        "message": "主路径应只美化目标笔记一篇"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "已经按标题和重点块整理好了",
+        "message": "最终回答需明确说明已完成结构化整理"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.complex_note",
+        "message": "复杂但无关的笔记不能被污染"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.simple_note",
+        "message": "简单提醒笔记不能被污染"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.control_note",
+        "message": "控制笔记不能被污染"
+      }
+    ],
+    "tolerance_rules": [
+      {
+        "kind": "ignore_paths",
+        "paths": [
+          "notes.mixed_note.metadata.updated_at",
+          "stats.collection_time"
+        ],
+        "label": "允许美化时间戳变化"
+      }
+    ]
+  },
+  "final_state_collectors": [
+    {
+      "id": "mixed_note",
+      "kind": "note_snapshot",
+      "path": "notes.mixed_note"
+    },
+    {
+      "id": "complex_note",
+      "kind": "note_snapshot",
+      "path": "notes.complex_note"
+    },
+    {
+      "id": "simple_note",
+      "kind": "note_snapshot",
+      "path": "notes.simple_note"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    },
+    {
+      "id": "stats",
+      "kind": "title_match_count",
+      "path": "stats"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "删除 run-beautifier-mainline 相关测试对象。"
+  }
+}

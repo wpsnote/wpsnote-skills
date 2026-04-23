@@ -1,0 +1,160 @@
+{
+  "id": "news-to-note-golden-fetch-failure-no-note-created",
+  "suite": "golden",
+  "skill": "news-to-note",
+  "prompt": "这条我一直打不开，你帮我看看值不值得跟进：https://fixture.local/news/broken-payments-incident",
+  "seed": {
+    "description": "MCP 预置一个持续抓取失败的新闻链接；同时保留运维周报、事故复盘会议纪要和一条午饭随手记，模拟用户在工作流里遇到坏链接时的失败/降级场景。",
+    "entities": [
+      "fixture.broken_payments_incident",
+      "notes.ops_weekly_note",
+      "notes.incident_meeting_note",
+      "notes.random_note"
+    ],
+    "state_fixtures": {
+      "original": "evals/fixtures/news-to-note/fetch-failure-no-note-created.original.json",
+      "final": "evals/fixtures/news-to-note/fetch-failure-no-note-created.final.json"
+    }
+  },
+  "original_state_collectors": [
+    {
+      "id": "failed_news_note",
+      "kind": "search_note_by_title",
+      "title": "支付故障复盘：多云切换导致区域抖动"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.failed_news_note_title_match_count",
+      "title": "支付故障复盘：多云切换导致区域抖动"
+    },
+    {
+      "id": "ops_weekly_note",
+      "kind": "note_snapshot",
+      "path": "notes.ops_weekly_note"
+    },
+    {
+      "id": "incident_meeting_note",
+      "kind": "note_snapshot",
+      "path": "notes.incident_meeting_note"
+    },
+    {
+      "id": "random_note",
+      "kind": "note_snapshot",
+      "path": "notes.random_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.ops_weekly_note",
+      "notes.incident_meeting_note",
+      "notes.random_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "path_missing",
+        "path": "notes.failed_news_note",
+        "message": "抓取失败时不应生成空白或半成品新闻笔记"
+      },
+      {
+        "kind": "count_equals",
+        "path": "stats.failed_news_note_title_match_count",
+        "value": 0,
+        "message": "失败后同标题新闻笔记数量必须仍为 0"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "暂时没拿到可用正文",
+        "message": "最终回答必须明确告知新闻正文抓取失败"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "再给我一个能打开的链接",
+        "message": "失败路径应给出下一步补救建议"
+      },
+      {
+        "kind": "count_equals",
+        "path": "response.hits",
+        "value": 0,
+        "message": "未拿到正文时不应产出伪关联命中"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.ops_weekly_note",
+        "message": "失败流程不能污染运维周报"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.incident_meeting_note",
+        "message": "失败流程不能改写事故会议纪要"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "已帮你存到笔记",
+        "message": "失败时不能假装已经写入成功"
+      }
+    ],
+    "tolerance_rules": [
+      {
+        "kind": "ignore_paths",
+        "paths": [
+          "stats.collection_time"
+        ],
+        "label": "允许失败回执采集时间不同"
+      }
+    ]
+  },
+  "final_state_collectors": [
+    {
+      "id": "failed_news_note",
+      "kind": "search_note_by_title",
+      "title": "支付故障复盘：多云切换导致区域抖动"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.failed_news_note_title_match_count",
+      "title": "支付故障复盘：多云切换导致区域抖动"
+    },
+    {
+      "id": "ops_weekly_note",
+      "kind": "note_snapshot",
+      "path": "notes.ops_weekly_note"
+    },
+    {
+      "id": "incident_meeting_note",
+      "kind": "note_snapshot",
+      "path": "notes.incident_meeting_note"
+    },
+    {
+      "id": "random_note",
+      "kind": "note_snapshot",
+      "path": "notes.random_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 30
+  },
+  "cleanup": {
+    "description": "清理 broken 链接测试对象并确认无残留新闻笔记。"
+  }
+}

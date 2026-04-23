@@ -2,7 +2,7 @@
   "id": "tag-organize-golden-rebuild-project-hierarchy",
   "suite": "golden",
   "skill": "tag-organize",
-  "prompt": "我在一组标题里带 tag-e2e-002 的项目笔记上试跑标签整理。请只处理这组笔记，把 `#测评/tag-e2e-002/Alpha` 和 `#测评/tag-e2e-002/Beta` 收进统一的项目父标签下面，别扩散到其他标签空间。",
+  "prompt": "我最近项目相关的标签越记越散，翻起来有点累。你帮我顺一下项目那一层就行。",
   "seed": {
     "description": "通过 MCP 预置两个项目笔记、扁平标签和一个无关对照笔记，所有标签都放在独立测评命名空间。",
     "entities": [

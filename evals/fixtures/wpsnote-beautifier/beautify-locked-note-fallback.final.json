@@ -1,0 +1,82 @@
+{
+  "notes": {
+    "complex_note": {
+      "title": "季度复盘（策略版）",
+      "tags": [
+        "#复盘",
+        "#策略"
+      ],
+      "body_xml": "<h1>季度复盘（策略版）</h1><h2>目标达成</h2><p>核心指标完成率 93%。</p><h2>偏差来源</h2><p>中段预算切换影响了连续投放。</p>",
+      "key_paragraphs": [
+        "核心指标完成率 93%。",
+        "中段预算切换影响了连续投放。"
+      ],
+      "heading_levels": [
+        "h1",
+        "h2",
+        "h2"
+      ],
+      "highlight_blocks": [
+        "核心指标完成率 93%。"
+      ],
+      "quote_count": 1,
+      "hash": "beautifier-fallback-complex-001"
+    },
+    "simple_note": {
+      "title": "晚点给打印机加纸",
+      "tags": [
+        "#待办"
+      ],
+      "body_xml": "<p>回工位先给打印机补纸。</p>",
+      "key_paragraphs": [
+        "回工位先给打印机补纸。"
+      ],
+      "hash": "beautifier-fallback-simple-001"
+    },
+    "locked_messy_note": {
+      "title": "协作中会议草稿（别乱改）",
+      "tags": [
+        "#会议",
+        "#草稿"
+      ],
+      "body_xml": "<p>会议主题：渠道预算重排</p><p>结论先写：投放先保核心城市，新增城市下周再看</p><p>风险??? 客服说投诉量又上来了</p><p>todo 周五前把 FAQ 和客服话术都更新</p>",
+      "key_paragraphs": [
+        "会议主题：渠道预算重排",
+        "投放先保核心城市，新增城市下周再看",
+        "周五前把 FAQ 和客服话术都更新"
+      ],
+      "heading_levels": [],
+      "highlight_blocks": [],
+      "quote_count": 0,
+      "metadata": {
+        "updated_at": "2026-04-22T12:00:00Z",
+        "lock_state": "read_only"
+      },
+      "hash": "beautifier-fallback-locked-001"
+    },
+    "control_note": {
+      "title": "无关控制笔记-003",
+      "tags": [
+        "#control"
+      ],
+      "body_xml": "<p>下班前把窗户关好。</p>",
+      "key_paragraphs": [
+        "下班前把窗户关好。"
+      ],
+      "hash": "beautifier-fallback-control-001"
+    }
+  },
+  "response": {
+    "text": "我没能直接改写这条笔记，因为它现在是协作锁定状态。先给你一版建议版结构，你解锁后可直接套用：一级标题：会议主题；二级标题：结论；二级标题：风险与跟进。",
+    "suggested_outline": [
+      "一级标题：会议主题",
+      "二级标题：本次结论",
+      "二级标题：风险与影响",
+      "二级标题：待办与负责人"
+    ]
+  },
+  "stats": {
+    "beautified_note_count": 0,
+    "collection_time": "2026-04-22T12:03:00Z"
+  }
+}

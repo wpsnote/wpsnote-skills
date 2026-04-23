@@ -1,0 +1,75 @@
+{
+  "notes": {
+    "complex_note": {
+      "title": "渠道复盘（完整版）",
+      "tags": [
+        "#项目A",
+        "#复盘"
+      ],
+      "body_xml": "<h1>渠道复盘（完整版）</h1><h2>结果</h2><p>投放成本比上月下降了 11%。</p><h2>问题</h2><p>新客转化在华南区仍偏低。</p>",
+      "key_paragraphs": [
+        "投放成本比上月下降了 11%。",
+        "新客转化在华南区仍偏低。"
+      ],
+      "heading_levels": [
+        "h1",
+        "h2",
+        "h2"
+      ],
+      "highlight_blocks": [
+        "投放成本比上月下降了 11%。"
+      ],
+      "quote_count": 1,
+      "hash": "beautifier-main-complex-001"
+    },
+    "simple_note": {
+      "title": "明早买咖啡豆",
+      "tags": [
+        "#生活"
+      ],
+      "body_xml": "<p>明早去楼下买两袋咖啡豆。</p>",
+      "key_paragraphs": [
+        "明早去楼下买两袋咖啡豆。"
+      ],
+      "hash": "beautifier-main-simple-001"
+    },
+    "mixed_note": {
+      "title": "项目例会纪要（4月22日）",
+      "tags": [
+        "#会议",
+        "#临时记录"
+      ],
+      "body_xml": "<p>项目例会纪要（4月22日）</p><p>预算 4月先卡在 120w>>>> 别再超了</p><p>风险:安卓闪退还没收口 ### 客服今天又催</p><p>待办 周五前给市场确认新投放口径；运营把 FAQ 改掉</p>",
+      "key_paragraphs": [
+        "预算 4月先卡在 120w>>>> 别再超了",
+        "风险:安卓闪退还没收口 ### 客服今天又催",
+        "待办 周五前给市场确认新投放口径；运营把 FAQ 改掉"
+      ],
+      "heading_levels": [],
+      "highlight_blocks": [],
+      "quote_count": 0,
+      "metadata": {
+        "updated_at": "2026-04-22T10:00:00Z"
+      },
+      "hash": "beautifier-main-mixed-001"
+    },
+    "control_note": {
+      "title": "无关控制笔记-001",
+      "tags": [
+        "#control"
+      ],
+      "body_xml": "<p>周六给空调做一次清洗。</p>",
+      "key_paragraphs": [
+        "周六给空调做一次清洗。"
+      ],
+      "hash": "beautifier-main-control-001"
+    }
+  },
+  "response": {
+    "text": ""
+  },
+  "stats": {
+    "beautified_note_count": 0,
+    "collection_time": "2026-04-22T10:00:00Z"
+  }
+}

@@ -36,7 +36,7 @@ metadata:
 
 1. 调用 `get_note_outline` 获取笔记大纲（包含 block_id、类型、文本预览）
 2. 调用 `read_note` 读取全文 XML
-3. 调用 `get_xml_reference` 获取 XML 格式参考（首次美化时）
+3. 调用 `read_file` 读取本 Skill 的 XML 参考文件（首次美化时）
 
 **分析要点：**
 

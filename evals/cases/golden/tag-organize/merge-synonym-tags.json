@@ -2,17 +2,29 @@
   "id": "tag-organize-golden-merge-synonym-tags",
   "suite": "golden",
   "skill": "tag-organize",
-  "prompt": "我最近这几篇工作笔记的待办标签写法有点乱，有的写 `#todo`，有的写 `#to-do`，也有一篇已经写成了 `#待办`。你先给我一个很简短的整理方案；如果只是小改动，就直接处理。先只看这三篇：`Alpha 项目合同跟进`、`周会待处理`、`个人任务清单`。保留像 `#工作` 这种已经合理的标签，别改坏正文，也不要动 `发票归档说明` 这篇。",
+  "prompt": "我刚把这周东一条西一条的笔记翻了一遍，同一种提醒标签被我写成了好几种，你帮我顺一下；纯归档说明那类先别动。",
   "seed": {
-    "description": "通过 MCP 预置三篇真实感较强的工作笔记：两篇待办标签写法不一致，一篇已使用中文待办标签；另放一篇归档说明作为无关对照笔记。",
+    "description": "通过 MCP 预置 5 篇使用 todo/to-do/待办 混写的真实脏笔记、1 篇已规范的个人便签和 1 篇纯归档对照笔记；标签同时覆盖层级标签与简单标签。",
     "entities": [
       "notes.followup_note",
       "notes.weekly_note",
+      "notes.qa_note",
+      "notes.vendor_note",
+      "notes.admin_note",
       "notes.personal_tasks_note",
       "notes.control_note",
       "tags.todo",
       "tags.to-do",
-      "tags.待办"
+      "tags.待办",
+      "tags.工作/客户/华东组",
+      "tags.项目/Alpha/合同",
+      "tags.会议/周会",
+      "tags.项目/Alpha/联调",
+      "tags.项目/Alpha/验收",
+      "tags.采购",
+      "tags.供应商/A类",
+      "tags.报销",
+      "tags.存档/财务"
     ]
   },
   "original_state_collectors": [
@@ -25,6 +37,21 @@
       "id": "weekly_note",
       "kind": "note_snapshot",
       "path": "notes.weekly_note"
+    },
+    {
+      "id": "qa_note",
+      "kind": "note_snapshot",
+      "path": "notes.qa_note"
+    },
+    {
+      "id": "vendor_note",
+      "kind": "note_snapshot",
+      "path": "notes.vendor_note"
+    },
+    {
+      "id": "admin_note",
+      "kind": "note_snapshot",
+      "path": "notes.admin_note"
     },
     {
       "id": "personal_tasks_note",
@@ -46,7 +73,10 @@
     "entities_expected_created": [],
     "entities_expected_updated": [
       "notes.followup_note",
-      "notes.weekly_note"
+      "notes.weekly_note",
+      "notes.qa_note",
+      "notes.vendor_note",
+      "notes.admin_note"
     ],
     "entities_expected_unchanged": [
       "notes.personal_tasks_note",
@@ -58,17 +88,48 @@
         "path": "notes.followup_note.tags",
         "value": [
           "#待办",
-          "#工作"
+          "#工作/客户/华东组",
+          "#项目/Alpha/合同"
         ],
-        "message": "项目跟进笔记的标签集合必须收敛到统一写法"
+        "message": "合同跟进笔记的标签集合必须收敛到统一写法"
       },
       {
         "kind": "set_equals",
         "path": "notes.weekly_note.tags",
         "value": [
-          "#待办"
+          "#待办",
+          "#会议/周会",
+          "#项目/Alpha/联调"
         ],
-        "message": "周会记录笔记必须迁移到统一待办标签"
+        "message": "例会散记必须迁移到统一提醒标签"
+      },
+      {
+        "kind": "set_equals",
+        "path": "notes.qa_note.tags",
+        "value": [
+          "#待办",
+          "#项目/Alpha/验收"
+        ],
+        "message": "已经混用两种写法的验收笔记必须去重并统一"
+      },
+      {
+        "kind": "set_equals",
+        "path": "notes.vendor_note.tags",
+        "value": [
+          "#待办",
+          "#采购",
+          "#供应商/A类"
+        ],
+        "message": "供应商比价笔记也必须并入统一提醒标签"
+      },
+      {
+        "kind": "set_equals",
+        "path": "notes.admin_note.tags",
+        "value": [
+          "#待办",
+          "#报销"
+        ],
+        "message": "短便签里的旧写法也必须被统一"
       },
       {
         "kind": "set_equals",
@@ -76,7 +137,7 @@
         "value": [
           "#待办"
         ],
-        "message": "原本已使用中文待办标签的笔记应保持不变"
+        "message": "原本已规范的个人便签应保持不变"
       },
       {
         "kind": "path_missing",
@@ -93,7 +154,7 @@
       {
         "kind": "path_changed",
         "path": "notes.control_note",
-        "message": "无关控制笔记不能被改动"
+        "message": "纯归档说明笔记不能被改动"
       }
     ],
     "tolerance_rules": [
@@ -102,7 +163,7 @@
         "paths": [
           "tags.待办.note_count"
         ],
-        "label": "允许标签引用数在同步后波动"
+        "label": "允许统一标签后的引用数在同步后波动"
       }
     ]
   },
@@ -116,6 +177,21 @@
       "id": "weekly_note",
       "kind": "note_snapshot",
       "path": "notes.weekly_note"
+    },
+    {
+      "id": "qa_note",
+      "kind": "note_snapshot",
+      "path": "notes.qa_note"
+    },
+    {
+      "id": "vendor_note",
+      "kind": "note_snapshot",
+      "path": "notes.vendor_note"
+    },
+    {
+      "id": "admin_note",
+      "kind": "note_snapshot",
+      "path": "notes.admin_note"
     },
     {
       "id": "personal_tasks_note",
@@ -136,9 +212,9 @@
   "grader": {
     "mode": "outcome-only",
     "report": "state_diff_report",
-    "max_diff_entries": 25
+    "max_diff_entries": 40
   },
   "cleanup": {
-    "description": "删除本次样张写入的四篇测试笔记，并回收 todo / to-do 这组临时测试标签。"
+    "description": "删除本次样张写入的七篇测试笔记，并回收 todo / to-do 这组临时测试标签。"
   }
 }

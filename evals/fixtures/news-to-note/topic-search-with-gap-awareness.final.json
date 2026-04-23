@@ -1,0 +1,85 @@
+{
+  "notes": {
+    "procurement_followup_note": {
+      "title": "四月采购尾单跟进（很乱先记）",
+      "tags": [
+        "#采购",
+        "#项目/极光"
+      ],
+      "body_xml": "<h1>四月采购尾单跟进（很乱先记）</h1><p>A 家交期还是卡，B 家报价便宜但付款条件又改了，今晚得再确认一次。</p><p>下周要不要锁单取决于关税和运费变化，先别拍板。</p><p>提醒：供应商会议纪要别再拖到周末补。</p>",
+      "key_paragraphs": [
+        "A 家交期还是卡，B 家报价便宜但付款条件又改了。",
+        "下周要不要锁单取决于关税和运费变化，先别拍板。"
+      ],
+      "hash": "procurement-followup-before"
+    },
+    "weekly_meeting_note": {
+      "title": "周一例会纪要（运营+采购）",
+      "tags": [
+        "#会议",
+        "#周会"
+      ],
+      "body_xml": "<h1>周一例会纪要（运营+采购）</h1><p>运营催新品节奏，采购说当前库存还能撑两周，但价格风险还在。</p><p>财务提醒月底前先清一次待付款，别堆到最后一天。</p>",
+      "key_paragraphs": [
+        "采购说当前库存还能撑两周，但价格风险还在。",
+        "财务提醒月底前先清一次待付款。"
+      ],
+      "hash": "weekly-meeting-before"
+    },
+    "pocket_note": {
+      "title": "地铁上瞎记",
+      "tags": [
+        "#随手记"
+      ],
+      "body_xml": "<h1>地铁上瞎记</h1><p>今天别忘了带充电宝，晚上可能加班到很晚。</p>",
+      "key_paragraphs": [
+        "今天别忘了带充电宝，晚上可能加班到很晚。"
+      ],
+      "hash": "pocket-note-before"
+    },
+    "topic_news_note": {
+      "title": "欧盟拟上调动力电池进口关税（快讯汇总）",
+      "tags": [
+        "#新闻",
+        "#新闻//供应链"
+      ],
+      "source_url": "https://fixture.local/news/eu-battery-tariff-roundup",
+      "body_xml": "<h1>欧盟拟上调动力电池进口关税（快讯汇总）</h1><p><tag>#新闻</tag> <tag>#新闻//供应链</tag></p><p>多家媒体确认欧盟委员会正在评估上调动力电池进口关税，最快会在本季度末给出正式草案。</p><p>市场机构判断短期最先受影响的是交付周期与在途库存成本，供应链议价窗口会被压缩。</p><p>目前细则还没落地，不同税率情景下的成本区间差异较大。</p>",
+      "key_paragraphs": [
+        "多家媒体确认欧盟委员会正在评估上调动力电池进口关税，最快会在本季度末给出正式草案。",
+        "市场机构判断短期最先受影响的是交付周期与在途库存成本，供应链议价窗口会被压缩。",
+        "目前细则还没落地，不同税率情景下的成本区间差异较大。"
+      ],
+      "metadata": {
+        "source": "web_search",
+        "published_at": "2026-04-22",
+        "updated_at": "2026-04-22T05:23:00Z"
+      },
+      "hash": "topic-news-note-after"
+    }
+  },
+  "stats": {
+    "topic_news_note_title_match_count": 1,
+    "collection_time": "2026-04-22T05:24:00Z"
+  },
+  "response": {
+    "text": "我先按通用影响做了判断：这条关税新闻短期会拉高你采购单的价格波动和交付不确定性，尤其是你这周要不要锁单这件事会被直接影响。建议先把 A/B 两家供应商拆成“锁价”和“浮动价”两套方案。",
+    "hits": [
+      "procurement_followup_note",
+      "weekly_meeting_note"
+    ],
+    "evidence": [
+      "下周要不要锁单取决于关税和运费变化，先别拍板。",
+      "采购说当前库存还能撑两周，但价格风险还在。"
+    ],
+    "search_dimensions": [
+      "topic",
+      "time_range",
+      "cross_note_relation"
+    ],
+    "uncovered_gaps": [
+      "缺少最近两周的供应商报价更新",
+      "缺少按税率区间拆分的成本测算表"
+    ]
+  }
+}
