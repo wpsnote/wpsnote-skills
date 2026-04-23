@@ -32,6 +32,9 @@ yarn-error.log*
 # Test outputs (large eval files)
 skills/wps-note-intelligent-search/workspace/iteration-*/
 skills/wps-note-intelligent-search/workspace/iteration-*/benchmark.json
+evals/reports/
+evals/workspace/
+evals/**/*.report.json
 
 # Environment
 .env

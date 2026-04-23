@@ -1,0 +1,99 @@
+{
+  "id": "wps-deep-search-golden-cross-note-association",
+  "suite": "golden",
+  "skill": "wps-deep-search",
+  "prompt": "我在写北极星项目的季度复盘，想把和 Q3 规划有关的内容都串起来看。请找出相关笔记，说明它们之间的关联，并附上能支撑判断的原文证据。",
+  "seed": {
+    "description": "通过 MCP 预置规划草案、项目周报、风险清单三篇相关语料和一篇生活类对照语料，模拟真实的跨笔记复盘查询。",
+    "entities": [
+      "notes.project-plan",
+      "notes.weekly-report",
+      "notes.risk-log",
+      "notes.random-note"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "notes",
+      "kind": "query_corpus_snapshot",
+      "path": "notes"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.project-plan",
+      "notes.weekly-report",
+      "notes.risk-log",
+      "notes.random-note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_contains_all",
+        "path": "response.hits",
+        "values": [
+          "project-plan",
+          "weekly-report",
+          "risk-log"
+        ],
+        "message": "必须覆盖规划、周报和风险日志三类核心结果"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.search_dimensions",
+        "value": "cross_note_relation",
+        "message": "必须体现跨笔记关联维度"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.search_dimensions",
+        "value": "tags",
+        "message": "必须体现主题或标签关联维度"
+      },
+      {
+        "kind": "value_contains_all",
+        "path": "response.evidence",
+        "values": [
+          "里程碑延后两周",
+          "供应商交付存在风险"
+        ],
+        "message": "必须给出跨笔记关联证据"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "value_contains",
+        "path": "response.hits",
+        "value": "random-note",
+        "message": "无关笔记不能被纳入关联结果"
+      }
+    ],
+    "tolerance_rules": []
+  },
+  "final_state_collectors": [
+    {
+      "id": "notes",
+      "kind": "query_corpus_snapshot",
+      "path": "notes"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "查询型 case 无需删除数据，只需通过 MCP 确认语料未被修改。"
+  }
+}

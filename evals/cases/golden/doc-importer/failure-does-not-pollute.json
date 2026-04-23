@@ -1,0 +1,89 @@
+{
+  "id": "doc-importer-golden-failure-does-not-pollute",
+  "suite": "golden",
+  "skill": "doc-importer",
+  "prompt": "我刚拖进来一份会议纪要文件，但它可能已经损坏了。你先尝试导入；如果确认没法正常导，就直接告诉我无法导入，不要创建半成品笔记，也别碰我现有的其他笔记。",
+  "seed": {
+    "description": "通过 MCP 在远端准备一份损坏文档输入和一篇无关对照笔记。",
+    "entities": [
+      "fixture.run-003-broken",
+      "notes.control_note"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "stats",
+      "kind": "title_match_count",
+      "path": "stats"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.control_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "path_missing",
+        "path": "notes.failed_import_target",
+        "message": "损坏文档失败后不应创建空白或半成品笔记"
+      },
+      {
+        "kind": "count_equals",
+        "path": "stats.failed_import_target_note_count",
+        "value": 0,
+        "message": "失败后目标标题的匹配笔记数量必须仍为 0"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "无法导入",
+        "message": "最终回答必须明确说明当前无法导入"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.control_note",
+        "message": "失败路径不能污染无关控制笔记"
+      }
+    ],
+    "tolerance_rules": []
+  },
+  "final_state_collectors": [
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "stats",
+      "kind": "title_match_count",
+      "path": "stats"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 20
+  },
+  "cleanup": {
+    "description": "清理 run-003 相关测试对象。"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "notes": {
+    "control_note": {
+      "title": "run-web-001 控制笔记",
+      "tags": [
+        "#control"
+      ],
+      "body_xml": "<p>不应被修改</p>",
+      "hash": "web-control-001"
+    },
+    "imported_article": {
+      "title": "如何把周报整理成知识卡片",
+      "source_url": "https://fixture.local/run-web-001",
+      "tags": [
+        "#网页导入"
+      ],
+      "body_xml": "<h1>如何把周报整理成知识卡片</h1><blockquote><p><strong>链接</strong>：https://fixture.local/run-web-001</p></blockquote><h2>背景介绍</h2><p>背景介绍</p><h2>结论摘要</h2><p>结论摘要</p>",
+      "key_paragraphs": [
+        "背景介绍",
+        "结论摘要"
+      ],
+      "heading_count": 2,
+      "image_count": 1,
+      "quote_count": 1,
+      "metadata": {
+        "fetch_time": "2026-04-22T09:00:00Z"
+      },
+      "hash": "web-import-001"
+    }
+  },
+  "stats": {
+    "imported_article_title_match_count": 1
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wpsnote.example/schemas/tri_state_report.schema.json",
+  "title": "Tri-state outcome-only eval report",
+  "type": "object",
+  "required": [
+    "case_id",
+    "skill",
+    "status",
+    "state_diff_report",
+    "checks"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "skill": {
+      "type": "string"
+    },
+    "suite": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "assert_fail",
+        "run_fail",
+        "bootstrap_fail"
+      ]
+    },
+    "state_diff_report": {
+      "type": "object",
+      "required": [
+        "original_state_summary",
+        "expected_state_summary",
+        "final_state_summary",
+        "actual_delta",
+        "failed_reasons"
+      ],
+      "properties": {
+        "original_state_summary": {
+          "type": "object"
+        },
+        "expected_state_summary": {
+          "type": "object"
+        },
+        "final_state_summary": {
+          "type": "object"
+        },
+        "actual_delta": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "failed_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "checks": {
+      "type": "object",
+      "required": [
+        "entity_expectations",
+        "required_changes",
+        "forbidden_changes",
+        "tolerance_rules"
+      ],
+      "properties": {
+        "entity_expectations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "required_changes": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "forbidden_changes": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "tolerance_rules": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

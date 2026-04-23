@@ -1,0 +1,47 @@
+{
+  "notes": {
+    "meeting-weekly-0415": {
+      "title": "北极星项目 0415 周会纪要",
+      "tags": [
+        "#项目/北极星",
+        "#会议"
+      ],
+      "key_paragraphs": [
+        "预算锁定",
+        "下周继续推进"
+      ],
+      "hash": "meeting-0415"
+    },
+    "meeting-q2-roadmap": {
+      "title": "北极星项目 Q2 路线图会议",
+      "tags": [
+        "#项目/北极星",
+        "#会议",
+        "#规划"
+      ],
+      "key_paragraphs": [
+        "预算锁定",
+        "Q2 里程碑确认"
+      ],
+      "hash": "meeting-roadmap"
+    },
+    "random-note": {
+      "title": "周末购物清单",
+      "tags": [
+        "#生活"
+      ],
+      "key_paragraphs": [
+        "牛奶",
+        "洗衣液"
+      ],
+      "hash": "random-001"
+    }
+  },
+  "response": {
+    "text": "",
+    "hits": [],
+    "evidence": [],
+    "search_dimensions": [],
+    "uncovered_gaps": []
+  }
+}

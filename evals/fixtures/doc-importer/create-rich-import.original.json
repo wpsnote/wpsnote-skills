@@ -1,0 +1,23 @@
+{
+  "notes": {
+    "control_note": {
+      "title": "run-001 控制笔记",
+      "tags": [
+        "#control"
+      ],
+      "body_xml": "<p>保持不变</p>",
+      "key_paragraphs": [
+        "保持不变"
+      ],
+      "image_count": 0,
+      "metadata": {
+        "updated_at": "2026-04-22T09:00:00Z"
+      },
+      "hash": "ctrl-001"
+    }
+  },
+  "stats": {
+    "import_target_note_count": 0,
+    "collection_time": "2026-04-22T09:00:00Z"
+  }
+}

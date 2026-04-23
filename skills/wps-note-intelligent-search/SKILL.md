@@ -4,7 +4,7 @@ description: |
   【深度搜索】深挖笔记关联，构建知识图谱的 WPS 笔记查询助手。
   当用户说"深度搜索""帮我深挖""关联查询""全面梳理"时使用。
   支持跨笔记关联挖掘、语义发散扩展、知识沉淀，不同于简单关键词匹配。
-  不要用于单关键词查询（那用 search_notes MCP 工具）。
+  不要用于单关键词查询（那用 search_notes 工具）。
 metadata:
   version: "1.0.0"
   category: search
@@ -40,15 +40,15 @@ metadata:
 ### Error Handling
 - **无效查询** → 返回 400，提示优化建议
 - **无匹配结果** → 返回空列表 + 扩展搜索建议
-- **MCP 调用失败** → 返回 503，启用本地降级策略
+- **工具调用失败** → 返回 503，启用本地降级策略
 
 ## 与 wps-note 的关系
 
 本 Skill 是 `wps-note` 基础能力层的**场景封装层**，复用其底层搜索能力，专注于**深度搜索场景**：
 
-- **不重复定义底层操作**：直接调用 `wps-note` 的 MCP 工具
+- **不重复定义底层操作**：直接调用 `wps-note` 的笔记工具
 - **增加智能层**：意图解析、策略规划、结果关联分析
-- **场景化封装**：将多个 MCP 工具调用编排为完整深度搜索流程
+- **场景化封装**：将多个笔记工具调用编排为完整深度搜索流程
 
 ---
 
@@ -59,7 +59,7 @@ metadata:
 适用于查找特定时间段的相关内容：
 
 ```
-意图解析 → search_notes({ keyword, since, before }) → find_tags → 结果聚合
+意图解析 → search_notes（关键词 + 时间范围） → find_tags → 结果聚合
 ```
 
 ### 模式 2：跨笔记关联挖掘
@@ -75,94 +75,60 @@ metadata:
 已知笔记范围，查找具体段落：
 
 ```
-search_notes({ keyword }) → note_id → search_note_content({ note_id, query }) → read_blocks → 展示具体段落
+search_notes（先定位目标笔记） → search_note_content（在单篇内定位段落） → read_blocks → 展示具体段落
 ```
 
 ---
 
 ## 工具列表与调用方式
 
-本 Skill 复用 `wps-note` 的 MCP 工具执行深度搜索：
+本 Skill 复用 `wps-note` 的笔记工具执行深度搜索：
 
-| 工具名 | 用途 | MCP 调用 |
+| 工具名 | 用途 | 调用方式 |
 |--------|------|----------|
-| `search_notes` | 笔记全文搜索（关键词、标签、时间范围） | `mcp__wpsnote__search_notes` |
-| `search_note_content` | 单笔记内容精确搜索 | `mcp__wpsnote__search_note_content` |
-| `get_note_outline` | 获取笔记结构大纲 | `mcp__wpsnote__get_note_outline` |
-| `get_note_info` | 批量获取笔记元数据 | `mcp__wpsnote__get_note_info` |
-| `find_tags` | 标签查找 | `mcp__wpsnote__find_tags` |
+| `search_notes` | 笔记全文搜索（关键词、标签、时间范围） | 直接调用 `search_notes` |
+| `search_note_content` | 单笔记内容精确搜索 | 直接调用 `search_note_content` |
+| `get_note_outline` | 获取笔记结构大纲 | 直接调用 `get_note_outline` |
+| `read_blocks` | 精确读取命中 block 的完整内容 | 直接调用 `read_blocks` |
+| `get_note_info` | 获取笔记元数据 | 直接调用 `get_note_info` |
+| `find_tags` | 标签查找 | 直接调用 `find_tags` |
 
-### MCP 工具调用示例
+### 工具调用示例
 
 #### 1. 带时间范围的搜索
 
-```
-search_notes({
-  keyword: "项目规划",
-  since: "2025-03-01T00:00:00Z",
-  before: "2025-03-07T23:59:59Z",
-  sort: "update_time",
-  direction: "desc",
-  limit: 20
-})
-→ {
-  notes: [
-    { note_id: "abc123", title: "Q1 项目规划", update_time: "..." },
-    ...
-  ]
-}
+```text
+用 `search_notes` 按“项目规划”关键词叠加时间范围筛选，先拿到候选笔记列表，
+再结合 `find_tags` 判断结果是偏项目、会议还是任务管理。
 ```
 
 #### 2. 标签 + 关键词联合搜索
 
-```
-search_notes({
-  keyword: "会议纪要",
-  tags: ["工作"],
-  since: "2025-02-01T00:00:00Z"
-})
-→ 返回同时满足：包含"会议纪要" + 标签为"工作" + 2月后的笔记
+```text
+先用 `search_notes` 搜“会议纪要”，再叠加标签和时间过滤，
+确认返回结果同时满足“会议纪要 + 工作 + 指定时间范围”。
 ```
 
 #### 3. 单笔记内容精确搜索
 
-```
-search_notes({ keyword: "前端架构" }) → note_id: "xyz789"
-
-search_note_content({
-  note_id: "xyz789",
-  query: "React 组件设计",
-  max_results: 10
-})
-→ [
-  { block_id: "p1aBc2De3F", type: "paragraph", preview: "...React 组件..." },
-  ...
-]
-
-# 读取具体段落
-read_blocks({ note_id: "xyz789", block_ids: ["p1aBc2De3F"] })
+```text
+1. 用 `search_notes` 先定位“前端架构”这篇笔记
+2. 再用 `search_note_content` 搜“React 组件设计”
+3. 对命中的 block_id 调用 `read_blocks`，回读完整 XML 或正文片段
 ```
 
-#### 4. 获取笔记元数据批量确认
+#### 4. 获取候选笔记元数据确认
 
-```
-search_notes({ keyword: "项目" }) → note_ids: ["id1", "id2", "id3"]
-
-get_note_info({ note_ids: ["id1", "id2", "id3"] })
-→ [
-  { note_id: "id1", title: "...", word_count: 1200, tags: ["工作"] },
-  ...
-]
+```text
+search_notes 找到多篇候选后，按候选结果逐篇调用 `get_note_info`，
+确认标题、标签、更新时间等元数据，再决定是否继续深读。
 ```
 
 #### 5. 标签发现
 
-```
-find_tags({ keyword: "前端" })
-→ [
-  { id: "tag1", name: "前端技术" },
-  { id: "tag2", name: "前端架构" }
-]
+```text
+用 `find_tags` 查相关标签，确认现有体系里是否存在“前端技术”“前端架构”这类近义标签，
+再把这些标签作为扩展搜索维度并入结果分析。
 ```
 
 ## Workflow（工作流程）
@@ -210,40 +176,9 @@ find_tags({ keyword: "前端" })
 
 ## Scripts（外部脚本）
 
-scripts/ 目录包含轻量级 CLI 工具，通过 subprocess 调用，不进入 Context Window：
+默认直接使用笔记 Agent 提供的搜索与阅读工具完成深度检索，不依赖外部脚本。
 
-### 意图解析脚本
-```bash
-python scripts/__init__.py parse --query "上周的会议纪要"
-```
-
-输出：
-```json
-{
-  "query": "上周的会议纪要",
-  "keywords": "会议纪要",
-  "time_range": {
-    "since": "last_week_start",
-    "before": "last_week_end"
-  },
-  "tags": null,
-  "max_results": 10
-}
-```
-
-### 资产管理脚本
-```bash
-# 读取资产
-python scripts/asset_manager.py read search_patterns.json
-
-# 写入资产
-python scripts/asset_manager.py write search_patterns.json --data '{"patterns":[]}'
-
-# 列出资产
-python scripts/asset_manager.py list
-```
-
-资产存储位置：`~/.claude/wps-search-assets/`
+如果宿主环境额外提供脚本能力，可将其作为辅助解析手段，但不应替代 `search_notes`、`search_note_content`、`get_note_outline`、`get_note_info`、`find_tags` 这些核心工具。
 
 ## Examples（使用示例）
 
@@ -356,7 +291,7 @@ python scripts/asset_manager.py list
 2. 尝试同义词搜索
 3. 检查笔记是否为图片/PDF（不可搜索）
 
-### MCP 工具调用失败
+### 工具调用失败
 
 **现象**：`search_notes` 等工具报错
 **原因**：参数格式错误、EDITOR_NOT_READY、网络问题
@@ -367,7 +302,7 @@ python scripts/asset_manager.py list
 4. 错误码速查：
    - `INVALID_PARAMS`: 检查参数类型和格式
    - `RATE_LIMITED`: 等待 60 秒后重试
-   - `INTERNAL_ERROR`: 调用 `get_mcp_logs` 查看详情
+   - `INTERNAL_ERROR`: 查看工具返回详情
 
 ### 时间范围解析错误
 
@@ -375,7 +310,7 @@ python scripts/asset_manager.py list
 **原因**：时间计算错误、时区问题
 **解决**：
 1. 明确确认用户意图（具体日期范围）
-2. 使用脚本 `scripts/__init__.py parse` 辅助解析
+2. 结合 `search_notes` 的时间参数辅助解析
 3. 日期边界检查（since ≤ before）
 
 ### 结果排序不符合预期
@@ -393,4 +328,4 @@ python scripts/asset_manager.py list
 
 - 架构设计: [references/architecture.md](references/architecture.md)
 - 契约详情: [references/contract.md](references/contract.md)
-- 外部脚本: [scripts/](scripts/)
+- 外部脚本（可选）: [scripts/](scripts/)

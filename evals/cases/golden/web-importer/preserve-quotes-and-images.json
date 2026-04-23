@@ -1,0 +1,127 @@
+{
+  "id": "web-importer-golden-preserve-quotes-and-images",
+  "suite": "golden",
+  "skill": "web-importer",
+  "prompt": "这篇长文我想存档，里面两段引用和两张配图都很重要。请把这个链接导入到 WPS 笔记里，引用和配图尽量别丢：https://fixture.local/run-web-002",
+  "seed": {
+    "description": "Codex 侧通过 MCP 预置一个包含 2 个引用块和 2 张关键图片的页面 fixture，以及一篇无关控制笔记。",
+    "entities": [
+      "fixture.run-web-002",
+      "notes.control_note"
+    ],
+    "state_fixtures": {
+      "original": "evals/fixtures/web-importer/preserve-quotes-and-images.original.json",
+      "final": "evals/fixtures/web-importer/preserve-quotes-and-images.final.json"
+    }
+  },
+  "original_state_collectors": [
+    {
+      "id": "imported_article",
+      "kind": "search_note_by_title",
+      "title": "把长文观点整理成可复用笔记"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.quote_article_title_match_count",
+      "title": "把长文观点整理成可复用笔记"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [
+      "notes.imported_article"
+    ],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.control_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_equals",
+        "path": "notes.imported_article.title",
+        "value": "把长文观点整理成可复用笔记",
+        "message": "导入后的标题必须与网页标题一致"
+      },
+      {
+        "kind": "value_equals",
+        "path": "notes.imported_article.source_url",
+        "value": "https://fixture.local/run-web-002",
+        "message": "导入后的笔记必须保留原网页链接"
+      },
+      {
+        "kind": "count_equals",
+        "path": "notes.imported_article.quote_count",
+        "value": 2,
+        "message": "引用块数量必须完整保留"
+      },
+      {
+        "kind": "count_equals",
+        "path": "notes.imported_article.image_count",
+        "value": 2,
+        "message": "关键图片数量必须完整保留"
+      },
+      {
+        "kind": "value_contains_all",
+        "path": "notes.imported_article.key_paragraphs",
+        "values": [
+          "引用观点一",
+          "作者总结"
+        ],
+        "message": "引用摘要和正文总结必须落库"
+      },
+      {
+        "kind": "value_equals",
+        "path": "stats.quote_article_title_match_count",
+        "value": 1,
+        "message": "同标题笔记应只有一篇，避免重复创建"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.control_note",
+        "message": "控制笔记不能被误改"
+      }
+    ],
+    "tolerance_rules": [
+      {
+        "kind": "ignore_paths",
+        "paths": [
+          "notes.imported_article.metadata.fetch_time"
+        ],
+        "label": "允许抓取时间不同"
+      }
+    ]
+  },
+  "final_state_collectors": [
+    {
+      "id": "imported_article",
+      "kind": "note_snapshot",
+      "path": "notes.imported_article"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.quote_article_title_match_count",
+      "title": "把长文观点整理成可复用笔记"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "删除本次网页导入结果和 run-web-002 相关测试对象。"
+  }
+}

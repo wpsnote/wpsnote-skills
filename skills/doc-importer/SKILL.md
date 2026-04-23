@@ -11,7 +11,6 @@ license: MIT
 metadata:
   author: 洛小山 (itshen)
   version: 1.2.0
-  mcp-server: user-wpsnote
   category: productivity
   tags: [obsidian, siyuan, wechat, html, import, pdf, docx, pptx, markdown]
 ---
@@ -24,20 +23,21 @@ metadata:
 
 ## 快速开始
 
-**优先使用 `wpsnote-cli` 脚本方式**，比 MCP 逐步操作更快：
+**当前技能的笔记写入统一走笔记 Agent 工具；如需理解批量扫描和转换逻辑，可先读取本 Skill 自带脚本：**
 
-```bash
-# 确认 CLI 连接正常
-wpsnote-cli status
+```text
+参考实现：
+- read_file("scripts/scan_docs.py")        # 目录扫描与来源识别
+- read_file("scripts/import_to_wps.py")    # 转换与导入主流程
 
-# 一键导入整个目录
-python3 scripts/import_to_wps.py ~/Documents/MyVault
-
-# 只导入没有导入过的（根据标题去重）
-python3 scripts/import_to_wps.py ~/Downloads --resume
-
-# 演习模式（不实际写入）
-python3 scripts/import_to_wps.py ~/Downloads --dry-run
+实际写入：
+- create_note
+- get_note_outline
+- batch_edit
+- insert_image
+- read_note / read_blocks
+- search_notes
+- sync_note
 ```
 
 ---
@@ -74,27 +74,25 @@ python3 scripts/import_to_wps.py ~/Downloads --dry-run
 
 ### 1. `get_note_outline` 默认只返回 100 个 block
 
-`outline` 接口默认分页，`blocks` 数组最多 100 条，但 `block_count` 字段会返回真实总数。
+`get_note_outline` 默认按分页视图返回 block，`blocks` 数组可能只覆盖前一部分内容，但 `block_count` 会返回真实总数。
 
-**影响**：大文章（> 100 个 block）用 outline 查占位符时，只能找到前 100 个，后半段图片全部丢失。
+**影响**：大文章（> 100 个 block）如果只靠首屏大纲查占位符，只能找到前一部分 block，后半段图片会丢失。
 
-**解决方案**：用 `read-blocks` 翻页续读：
+**解决方案**：先用 `get_note_outline` 拿首批 block，再用 `read_blocks` 续读：
 
 ```python
 def get_all_blocks(note_id):
     """翻页获取笔记全部 blocks"""
-    # 第一页用 outline（有 preview 字段）
-    r = cli(['outline', '--note_id', note_id])
+    # 第一页用 get_note_outline（有 preview 字段）
+    r = get_note_outline(note_id=note_id)
     data = r.get('data', {})
     total = data.get('block_count', 0)
     blocks = list(data.get('blocks', []))
     last_id = blocks[-1]['id'] if blocks else None
 
-    # 超过 100 时用 read-blocks 续读
+    # 超过首批范围时用 read_blocks 续读
     while len(blocks) < total and last_id:
-        r2 = cli(['read-blocks', '--note_id', note_id,
-                  '--block_id', last_id, '--after', '100',
-                  '--include_anchor', 'false'])
+        r2 = read_blocks(note_id=note_id, block_id=last_id, after=100)
         new_blocks = (r2.get('data') or {}).get('blocks', [])
         if not new_blocks:
             break
@@ -104,7 +102,7 @@ def get_all_blocks(note_id):
     return blocks
 ```
 
-> `outline` 返回的 block 有 `preview` 字段；`read-blocks` 返回的有 `content`（完整 XML）字段，但没有 `preview`。
+> `get_note_outline` 返回的 block 常带 `preview` 字段；`read_blocks` 更适合拿完整 XML 内容。
 
 ---
 
@@ -115,27 +113,20 @@ def get_all_blocks(note_id):
 **新版本（>= 0.1.4）**：已修复，`insert_image` 可以直接后台插图到任意笔记，无需切换前台。
 
 **处理策略**：
-- 优先检测版本，确认是否支持后台插图
-- 如果是旧版，导入完文字后需要等 WPS 自动切换到新建笔记再插图（或提示用户手动切换）
-- 推荐升级到最新版本
-
-```bash
-wpsnote-cli --version  # 检查版本
-```
+- 先按后台插图能力执行；如果图片插错位置，再回退为“切到目标笔记后插图”
+- 如果宿主或客户端仍表现为旧版行为，明确提示用户升级或手动切到目标笔记
+- 插图后务必回读验收，不要假设成功
 
 ---
 
-### 3. `list` 接口返回大数据时可能截断
+### 3. `list_notes` 返回大数据时要主动收敛范围
 
-`wpsnote-cli list` 返回 JSON 数据量较大时，Python 的 `subprocess` 读取输出可能出现 UTF-8 截断。
+`list_notes` 一次返回的数据过大时，不适合拿来做全文去重或全量扫描判断。
 
-**解决方案**：用 `bytes` 模式读取，忽略编码错误：
-
-```python
-r = subprocess.run(['wpsnote-cli', 'list', '--limit', '100', '--json'],
-                   capture_output=True, timeout=30)  # 注意：不加 text=True
-raw = r.stdout.decode('utf-8', errors='ignore')
-```
+**解决方案**：
+- 去重优先用 `search_notes` 按标题关键词搜索
+- 浏览列表时主动分页或缩小筛选范围
+- 不把一次大范围 `list_notes` 当成唯一真相来源
 
 ---
 
@@ -167,7 +158,7 @@ def do_insert(note_id, content, get_anchor_fn, max_retries=4):
 
 ```python
 def get_last_block_id(note_id):
-    r = cli(['outline', '--note_id', note_id])
+    r = get_note_outline(note_id=note_id)
     blocks = (r.get('data') or {}).get('blocks', [])
     return blocks[-1]['id'] if blocks else None
 ```
@@ -188,30 +179,23 @@ BATCH_SIZE = 4  # 不要超过 8，否则容易出现 anchor 失效
 
 ### 第一步：确定扫描目录
 
-**优先自动探测，不要直接问用户：**
+**优先根据用户已给出的目录 / 文件线索判断来源类型，不足时再 `ask_user` 补最少必要信息：**
 
-```bash
-# Obsidian Vault（macOS）
-ls ~/Documents/ | grep -i obsidian
-ls ~/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/ 2>/dev/null
-
-# 思源笔记（macOS）
-ls ~/Documents/SiYuan/ 2>/dev/null
-ls ~/SiYuan/ 2>/dev/null
-
-# 微信公众号存档（常见目录结构）
-ls ~/Documents/ | grep -i "mp\|公众号\|推文\|文章"
-
-# 下载目录
-ls ~/Downloads/ | grep -E "\.(pdf|docx|pptx|xlsx|md|html)$" | head -10
+```text
+优先识别这些常见来源线索：
+- Obsidian Vault：`.md` 文件 + `attachments/` 或同类附件目录
+- 思源笔记：`.sy` 文件 + `data/assets/`
+- 微信公众号存档：`原文.html` + 图片目录 + `meta.json`
+- 下载目录混合导入：PDF / DOCX / PPTX / XLSX / Markdown / HTML 混合存在
 ```
 
 ---
 
 ### 第二步：扫描文档列表
 
-```bash
-python3 scripts/scan_docs.py <目录路径> [--recursive] [--days N] [--source TYPE]
+```text
+如需对照扫描规则，用 `read_file("scripts/scan_docs.py")` 查看来源识别和输出字段约定；
+整理后的清单至少要包含路径、标题、时间、格式、图片数和预计 block 数。
 ```
 
 **输出 JSON 格式：**
@@ -264,11 +248,11 @@ python3 scripts/scan_docs.py <目录路径> [--recursive] [--days N] [--source T
 
 导入前通过标题检查 WPS 笔记中是否已存在同名笔记。
 
-**注意**：不要用 `list` 接口（数据量大时会截断），改用 `find` 按关键词搜索：
+**注意**：不要把 `list_notes` 当成去重主入口，改用 `search_notes` 按标题关键词搜索：
 
 ```python
 def check_exists(title):
-    r = cli(['find', '--keyword', title[:20], '--limit', '5'])
+    r = search_notes(keyword=title[:20], limit=5)
     notes = (r.get('data') or {}).get('notes', [])
     return next((n for n in notes if n['title'] == title), None)
 ```
@@ -344,34 +328,18 @@ f'<p>{publish_time} | <tag id="{tag_id}">#推文</tag></p>'
 
 ---
 
-## CLI 脚本方式（推荐）
+## 转换脚本参考（需要查看实现时）
 
-```bash
-# 全量导入
-python3 scripts/import_to_wps.py ~/Documents/mp_format/历史推文
-
-# 断点续跑（跳过已有标题的笔记）
-python3 scripts/import_to_wps.py ~/Documents/mp_format/历史推文 --resume
-
-# 指定来源类型
-python3 scripts/import_to_wps.py ~/Documents/MyVault --source obsidian
-
-# 只导入最近7天的 PDF 和 Word
-python3 scripts/import_to_wps.py ~/Downloads --days 7 --formats pdf,docx
-
-# 添加额外标签
-python3 scripts/import_to_wps.py ~/Downloads --tag "#项目A"
-
-# 跳过冲突（不询问）
-python3 scripts/import_to_wps.py ~/Downloads --on-conflict skip
-
-# 预先选择文件编号
-python3 scripts/import_to_wps.py ~/Downloads --select 1,3,5-10
+```text
+优先阅读这些文件来理解不同来源的导入逻辑：
+- read_file("scripts/import_to_wps.py")  # 主导入流程、去重、图片插入
+- read_file("scripts/scan_docs.py")      # 目录扫描、来源判断、筛选
+- read_file("references/conversion-guide.md")  # 格式映射细节
 ```
 
 ---
 
-## MCP 逐步操作（CLI 不可用时）
+## 笔记工具逐步写入（需要手动接管时）
 
 ```python
 # 1. 创建笔记
@@ -460,21 +428,15 @@ insert_image(note_id=note_id, anchor_id=placeholder_block_id,
 ### `insert_image` 报 `IMAGE_FETCH_FAILED`
 
 - 检查 base64 data URI 格式：必须是 `data:image/jpeg;base64,<数据>`（不能是 `data:application/octet-stream`）
-- 使用 `--src_file` 参数传入包含完整 data URI 的文件（适用于大图片，避免命令行长度限制）
-
-```bash
-# 正确方式（大图片）
-echo "data:image/jpeg;base64,$(base64 -i image.jpg)" > /tmp/img.txt
-wpsnote-cli insert-image --note_id "$ID" --anchor_id "$BID" --position before --src_file /tmp/img.txt
-```
+- 大图片优先使用稳定 URL；如果只能传 base64，确保传入的是完整 data URI
 
 ### anchor 失效导致内容截断
 
 实现 4 次重试逻辑，每次失败后重新获取 `last_block_id`，见"WPS API 关键限制"第 4 条。
 
-### `wpsnote-cli list` 返回乱码或截断
+### `list_notes` / `search_notes` 返回结果过多
 
-使用 `bytes` 模式读取，见"WPS API 关键限制"第 3 条。
+缩小筛选范围或主动分页，见"WPS API 关键限制"第 3 条。
 
 ### pandoc 未安装
 ```bash
@@ -498,7 +460,7 @@ brew install tesseract
 
 | 工具 | 用途 | 安装 |
 |------|------|------|
-| `wpsnote-cli` | CLI 操作 WPS 笔记（必须） | 见 wpsnote-cli 文档 |
+| 笔记 Agent 工具（`create_note` / `get_note_outline` / `batch_edit` / `insert_image` / `read_note` / `read_blocks` / `search_notes` / `sync_note`） | WPS 笔记写入、去重与回读（必须） | 宿主提供 |
 | `beautifulsoup4` | HTML 解析（公众号/网页） | `pip3 install beautifulsoup4` |
 | `lxml` | HTML 解析加速 | `pip3 install lxml` |
 | `pandoc` | DOCX → Markdown | `brew install pandoc` |

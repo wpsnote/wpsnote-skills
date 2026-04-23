@@ -1,0 +1,71 @@
+{
+  "notes": {
+    "todo-daily": {
+      "title": "北极星项目 日报 07-15",
+      "tags": [
+        "#项目/北极星",
+        "#日报"
+      ],
+      "key_paragraphs": [
+        "今天先完成合同初稿",
+        "采购报价下周前完成"
+      ],
+      "hash": "todo-daily-before"
+    },
+    "todo-meeting": {
+      "title": "北极星项目 周会纪要 07-16",
+      "tags": [
+        "#项目/北极星",
+        "#会议"
+      ],
+      "key_paragraphs": [
+        "法务确认合同条款",
+        "下周前完成报价比对"
+      ],
+      "hash": "todo-meeting-before"
+    },
+    "todo-followup": {
+      "title": "北极星项目 跟进清单",
+      "tags": [
+        "#项目/北极星",
+        "#跟进"
+      ],
+      "key_paragraphs": [
+        "催供应商补齐资质",
+        "周五前回传时间表"
+      ],
+      "hash": "todo-followup-before"
+    },
+    "random-note": {
+      "title": "周末电影片单",
+      "tags": [
+        "#生活"
+      ],
+      "key_paragraphs": [
+        "补看一部科幻片"
+      ],
+      "hash": "movie-list-001"
+    }
+  },
+  "response": {
+    "text": "北极星项目这组资料里尚未完成的事项主要分布在日报、周会纪要和跟进清单三篇笔记中。日报里提到采购报价下周前完成，周会纪要要求下周前完成报价比对，跟进清单则要求周五前回传时间表，这三条都应纳入本周例会待办。",
+    "hits": [
+      "todo-daily",
+      "todo-meeting",
+      "todo-followup"
+    ],
+    "evidence": [
+      "采购报价下周前完成",
+      "下周前完成报价比对",
+      "周五前回传时间表"
+    ],
+    "search_dimensions": [
+      "task_aggregation",
+      "topic",
+      "cross_note_relation"
+    ],
+    "uncovered_gaps": [
+      "部分待办未明确负责人"
+    ]
+  }
+}

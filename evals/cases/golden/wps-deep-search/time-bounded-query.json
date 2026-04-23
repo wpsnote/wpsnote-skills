@@ -1,0 +1,99 @@
+{
+  "id": "wps-deep-search-golden-time-bounded-query",
+  "suite": "golden",
+  "skill": "wps-deep-search",
+  "prompt": "我在补上周的会议回顾，想把跟预算和路线图有关的讨论一起找出来。请找出相关会议笔记，说明每篇为什么相关，并附上关键原文证据。",
+  "seed": {
+    "description": "通过 MCP 预置两篇上周会议笔记和一篇生活类对照笔记，模拟用户按时间范围回看会议讨论的真实场景。",
+    "entities": [
+      "notes.meeting-weekly-0415",
+      "notes.meeting-q2-roadmap",
+      "notes.random-note"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "notes",
+      "kind": "query_corpus_snapshot",
+      "path": "notes"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.meeting-weekly-0415",
+      "notes.meeting-q2-roadmap",
+      "notes.random-note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_contains_all",
+        "path": "response.hits",
+        "values": [
+          "meeting-weekly-0415",
+          "meeting-q2-roadmap"
+        ],
+        "message": "必须命中上周会议相关的两篇核心笔记"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.search_dimensions",
+        "value": "time_range",
+        "message": "必须显式体现时间维度"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.search_dimensions",
+        "value": "topic",
+        "message": "必须显式体现主题维度"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.evidence",
+        "value": "预算锁定",
+        "message": "必须给出来自语料的证据片段"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.evidence",
+        "value": "Q2 里程碑确认",
+        "message": "必须覆盖路线图会议中的关键证据"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "value_contains",
+        "path": "response.hits",
+        "value": "random-note",
+        "message": "无关随机笔记不能被错误命中"
+      }
+    ],
+    "tolerance_rules": []
+  },
+  "final_state_collectors": [
+    {
+      "id": "notes",
+      "kind": "query_corpus_snapshot",
+      "path": "notes"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "查询型 case 无需删除数据，只需通过 MCP 回读确认 seed 语料未被修改。"
+  }
+}

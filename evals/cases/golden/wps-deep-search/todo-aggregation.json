@@ -1,0 +1,99 @@
+{
+  "id": "wps-deep-search-golden-todo-aggregation",
+  "suite": "golden",
+  "skill": "wps-deep-search",
+  "prompt": "我周一要开例会，帮我把北极星项目这组资料里还没完成的事项都梳理出来，按来源笔记归并，并附上原文证据。",
+  "seed": {
+    "description": "通过 MCP 预置日报、会议纪要、跟进清单三篇含待办语料，以及一篇生活类对照笔记，模拟用户会前梳理待办的场景。",
+    "entities": [
+      "notes.todo-daily",
+      "notes.todo-meeting",
+      "notes.todo-followup",
+      "notes.random-note"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "notes",
+      "kind": "query_corpus_snapshot",
+      "path": "notes"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.todo-daily",
+      "notes.todo-meeting",
+      "notes.todo-followup",
+      "notes.random-note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_contains_all",
+        "path": "response.hits",
+        "values": [
+          "todo-daily",
+          "todo-meeting",
+          "todo-followup"
+        ],
+        "message": "必须覆盖三类待办来源"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.search_dimensions",
+        "value": "task_aggregation",
+        "message": "必须显式体现任务聚合维度"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.search_dimensions",
+        "value": "topic",
+        "message": "必须体现主题聚合维度"
+      },
+      {
+        "kind": "value_contains_all",
+        "path": "response.evidence",
+        "values": [
+          "采购报价下周前完成",
+          "周五前回传时间表"
+        ],
+        "message": "必须覆盖多来源待办证据"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "value_contains",
+        "path": "response.hits",
+        "value": "random-note",
+        "message": "生活类对照笔记不能被错误纳入待办聚合"
+      }
+    ],
+    "tolerance_rules": []
+  },
+  "final_state_collectors": [
+    {
+      "id": "notes",
+      "kind": "query_corpus_snapshot",
+      "path": "notes"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "查询型 case 无需删除数据，只需通过 MCP 确认语料未被修改。"
+  }
+}

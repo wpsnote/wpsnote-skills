@@ -1,0 +1,42 @@
+{
+  "notes": {
+    "control_note": {
+      "title": "run-web-003 控制笔记",
+      "tags": [
+        "#control"
+      ],
+      "body_xml": "<p>不应被修改</p>",
+      "hash": "web-control-003"
+    },
+    "partial_article": {
+      "title": "活动复盘：内容运营的三个失误",
+      "source_url": "https://fixture.local/run-web-003",
+      "tags": [
+        "#网页导入"
+      ],
+      "body_xml": "<h1>活动复盘：内容运营的三个失误</h1><blockquote><p><strong>链接</strong>：https://fixture.local/run-web-003</p></blockquote><p>开头摘要</p><p>当前仅抓取到可见正文，原文配图未抓取到。</p>",
+      "key_paragraphs": [
+        "开头摘要",
+        "当前仅抓取到可见正文"
+      ],
+      "heading_count": 1,
+      "image_count": 0,
+      "quote_count": 1,
+      "degraded": true,
+      "missing_assets": [
+        "hero_image",
+        "inline_media"
+      ],
+      "metadata": {
+        "fetch_time": "2026-04-22T09:10:00Z"
+      },
+      "hash": "web-import-003"
+    }
+  },
+  "response": {
+    "text": "已按降级方式导入《活动复盘：内容运营的三个失误》。标题和当前能抓到的正文已保存，但原文配图未抓取到。"
+  },
+  "stats": {
+    "partial_article_title_match_count": 1
+  }
+}

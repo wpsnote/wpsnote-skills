@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wpsnote.example/schemas/normalized_state.schema.json",
+  "title": "Normalized tri-state eval snapshot",
+  "type": "object",
+  "properties": {
+    "notes": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/noteEntity"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/tagEntity"
+      }
+    },
+    "response": {
+      "$ref": "#/$defs/responseEntity"
+    },
+    "stats": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "noteEntity": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "body_xml": {
+          "type": "string"
+        },
+        "key_paragraphs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "image_count": {
+          "type": "integer"
+        },
+        "quote_count": {
+          "type": "integer"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "hash": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "tagEntity": {
+      "type": "object",
+      "properties": {
+        "note_count": {
+          "type": "integer"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "responseEntity": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "hits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "search_dimensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -171,6 +171,44 @@ frontmatter 必需字段：
 
 创建新 Skill 的完整指南，请参考 [skill-creator](./skills/skill-creator/SKILL.md) 与 [claude-skills-complete-guide.md](./claude-skills-complete-guide.md)。
 
+# Outcome-Only E2E 评测
+
+仓库内置了一套 repo 级的 outcome-only 三态评测骨架，位置在 [./evals](./evals)。
+
+这套评测只看结果，不看工具调度链、不看 trace。每个 case 固定围绕三种状态：
+
+- `original_state`：执行前的真实基线
+- `expected_state`：期望达到的目标状态
+- `final_state`：执行后的真实观测状态
+
+首版覆盖 4 个重点 skill：
+
+- `doc-importer`
+- `tag-organize`
+- `web-importer`
+- `wps-deep-search`
+
+快速使用：
+
+```bash
+# 校验全部 case schema
+python3 evals/scripts/tri_state_eval.py validate evals/cases
+
+# 用原始快照和最终快照对单个 case 判分
+python3 evals/scripts/tri_state_eval.py grade \
+  --case evals/cases/golden/doc-importer/create-rich-import.json \
+  --original evals/fixtures/doc-importer/create-rich-import.original.json \
+  --final evals/fixtures/doc-importer/create-rich-import.final.json
+```
+
+自动化测试：
+
+```bash
+python3 -m unittest evals.tests.test_tri_state_eval
+```
+
+完整说明、schema、state guide 和示例 fixture 见 [./evals/README.md](./evals/README.md)。
+
 # 命令速查
 
 **核心操作模式**：先定位（`outline` / `search`）→ 再读取（`read`）→ 最后编辑（`edit`）
@@ -180,12 +218,10 @@ frontmatter 必需字段：
 | 分类 | CLI 命令 | MCP 工具 | 说明 |
 |------|----------|----------|------|
 | 读取 | `wpsnote-cli outline` | `get_note_outline` | 获取结构大纲与 block_id，超大文档自动分页 |
-| 读取 | `wpsnote-cli read` | `read_note` | 读取笔记全文 XML |
+| 读取 | `wpsnote-cli read` | `read_note_content` | 读取笔记全文 XML |
 | 读取 | `wpsnote-cli section` | `read_section` | 按标题读取章节，支持 `block_offset` 续读 |
 | 读取 | `wpsnote-cli read-blocks` | `read_blocks` | 按 ID 批量读取 block |
 | 读取 | `wpsnote-cli search` | `search_note_content` | 笔记内搜索，编辑前精确定位 |
-| 读取 | `wpsnote-cli read-image` | `read_image` | 读取图片 block |
-| 读取 | `wpsnote-cli audio` | `get_audio_transcript` | 获取语音录音转写文本 |
 | 读取 | `wpsnote-cli xml-ref` | `get_xml_reference` | 获取 XML 标签与写入示例 |
 | 写入 | `wpsnote-cli edit` | `edit_block` | 单个编辑操作 |
 | 写入 | `wpsnote-cli batch-edit` | `batch_edit` | 多个操作原子事务 |
@@ -195,12 +231,14 @@ frontmatter 必需字段：
 | 管理 | `wpsnote-cli list` | `list_notes` | 列出笔记 |
 | 管理 | `wpsnote-cli create` | `create_note` | 创建空白笔记 |
 | 管理 | `wpsnote-cli info` | `get_note_info` | 获取笔记元数据 |
-| 管理 | `wpsnote-cli current` | `get_current_note` | 获取当前编辑中的笔记 |
-| 管理 | `wpsnote-cli tags` | `find_tags` | 列出或搜索标签 |
-| 管理 | `wpsnote-cli stats` | `get_note_stats` | 获取统计 |
-| 管理 | `wpsnote-cli sync` | `sync_note` | 触发云端同步 |
-| 管理 | `wpsnote-cli delete` | `delete_note` | 永久删除 |
-| 调试 | `wpsnote-cli logs` | `get_mcp_logs` | 查看工具调用日志 |
+| 管理 | `wpsnote-cli tags` | `list_tags` / `find_tags` | 列出全部标签或按关键词搜索标签 |
+| 管理 | `wpsnote-cli tag-notes` | `get_notes_by_tag` | 查看某个标签下的笔记 |
+| 管理 | `wpsnote-cli add-tags` | `add_note_tags` | 给笔记追加标签 |
+| 管理 | `wpsnote-cli remove-tags` | `remove_note_tags` | 从笔记移除标签 |
+| 管理 | `wpsnote-cli rename-tag` | `rename_tag` | 重命名标签 |
+| 管理 | `wpsnote-cli import-web` | `import_web_page` | 导入支持域名的网页内容 |
+| 管理 | `wpsnote-cli trash` | `trash_note` | 将笔记移入回收站 |
+| 管理 | `wpsnote-cli delete` | `permanently_delete_note` | 永久删除回收站中的笔记 |
 
 # 社区与贡献
 

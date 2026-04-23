@@ -1,0 +1,135 @@
+{
+  "id": "web-importer-golden-fallback-on-partial-page",
+  "suite": "golden",
+  "skill": "web-importer",
+  "prompt": "这个页面我也想存档。就算抓不全，也请至少把标题和当前能读到的正文保存下来，并明确告诉我缺了什么：https://fixture.local/run-web-003",
+  "seed": {
+    "description": "Codex 侧通过 MCP 预置一个可抓取但媒体资源不完整的页面 fixture，以及一篇无关控制笔记。",
+    "entities": [
+      "fixture.run-web-003",
+      "notes.control_note"
+    ],
+    "state_fixtures": {
+      "original": "evals/fixtures/web-importer/fallback-on-partial-page.original.json",
+      "final": "evals/fixtures/web-importer/fallback-on-partial-page.final.json"
+    }
+  },
+  "original_state_collectors": [
+    {
+      "id": "partial_article",
+      "kind": "search_note_by_title",
+      "title": "活动复盘：内容运营的三个失误"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.partial_article_title_match_count",
+      "title": "活动复盘：内容运营的三个失误"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [
+      "notes.partial_article"
+    ],
+    "entities_expected_updated": [],
+    "entities_expected_unchanged": [
+      "notes.control_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_equals",
+        "path": "notes.partial_article.title",
+        "value": "活动复盘：内容运营的三个失误",
+        "message": "即使降级也必须保留标题"
+      },
+      {
+        "kind": "value_equals",
+        "path": "notes.partial_article.source_url",
+        "value": "https://fixture.local/run-web-003",
+        "message": "降级导入也必须保留原网页链接"
+      },
+      {
+        "kind": "count_at_least",
+        "path": "notes.partial_article.key_paragraphs",
+        "value": 1,
+        "message": "至少应落库一段可见正文"
+      },
+      {
+        "kind": "value_equals",
+        "path": "notes.partial_article.degraded",
+        "value": true,
+        "message": "降级场景必须在最终状态中被明确标记"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "降级",
+        "message": "最终回答必须说明抓取已降级"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "未抓取",
+        "message": "最终回答必须说明缺失内容"
+      },
+      {
+        "kind": "value_equals",
+        "path": "stats.partial_article_title_match_count",
+        "value": 1,
+        "message": "同标题笔记应只有一篇，避免重复创建"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.control_note",
+        "message": "降级路径不能污染控制笔记"
+      }
+    ],
+    "tolerance_rules": [
+      {
+        "kind": "ignore_paths",
+        "paths": [
+          "notes.partial_article.metadata.fetch_time"
+        ],
+        "label": "允许抓取时间不同"
+      }
+    ]
+  },
+  "final_state_collectors": [
+    {
+      "id": "partial_article",
+      "kind": "note_snapshot",
+      "path": "notes.partial_article"
+    },
+    {
+      "id": "title_match_count",
+      "kind": "search_note_by_title_count",
+      "path": "stats.partial_article_title_match_count",
+      "title": "活动复盘：内容运营的三个失误"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "删除本次网页导入结果和 run-web-003 相关测试对象。"
+  }
+}

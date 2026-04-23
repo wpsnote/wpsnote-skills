@@ -1,0 +1,63 @@
+{
+  "notes": {
+    "followup_note": {
+      "title": "Alpha 项目合同跟进",
+      "tags": [
+        "#todo",
+        "#工作"
+      ],
+      "body_xml": "<p><tag>#todo</tag> <tag>#工作</tag> 今天要跟进合同和报价。</p><p>第二段正文不要被改坏。</p>",
+      "key_paragraphs": [
+        "今天要跟进合同和报价。"
+      ],
+      "hash": "followup-before"
+    },
+    "weekly_note": {
+      "title": "周会待处理",
+      "tags": [
+        "#to-do"
+      ],
+      "body_xml": "<p><tag>#to-do</tag> 明天补会议纪要。</p>",
+      "key_paragraphs": [
+        "明天补会议纪要。"
+      ],
+      "hash": "weekly-before"
+    },
+    "personal_tasks_note": {
+      "title": "个人任务清单",
+      "tags": [
+        "#待办"
+      ],
+      "body_xml": "<p><tag>#待办</tag> 周五前把报销单提交出去。</p>",
+      "key_paragraphs": [
+        "周五前把报销单提交出去。"
+      ],
+      "hash": "personal-before"
+    },
+    "control_note": {
+      "title": "发票归档说明",
+      "tags": [
+        "#存档"
+      ],
+      "body_xml": "<p><tag>#存档</tag> 报销附件统一放在共享盘归档目录。</p>",
+      "hash": "control-note"
+    }
+  },
+  "tags": {
+    "todo": {
+      "note_count": 1,
+      "children": []
+    },
+    "to-do": {
+      "note_count": 1,
+      "children": []
+    },
+    "待办": {
+      "note_count": 1,
+      "children": []
+    }
+  },
+  "response": {
+    "text": ""
+  }
+}

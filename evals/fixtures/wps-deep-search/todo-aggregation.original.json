@@ -1,0 +1,57 @@
+{
+  "notes": {
+    "todo-daily": {
+      "title": "北极星项目 日报 07-15",
+      "tags": [
+        "#项目/北极星",
+        "#日报"
+      ],
+      "key_paragraphs": [
+        "今天先完成合同初稿",
+        "采购报价下周前完成"
+      ],
+      "hash": "todo-daily-before"
+    },
+    "todo-meeting": {
+      "title": "北极星项目 周会纪要 07-16",
+      "tags": [
+        "#项目/北极星",
+        "#会议"
+      ],
+      "key_paragraphs": [
+        "法务确认合同条款",
+        "下周前完成报价比对"
+      ],
+      "hash": "todo-meeting-before"
+    },
+    "todo-followup": {
+      "title": "北极星项目 跟进清单",
+      "tags": [
+        "#项目/北极星",
+        "#跟进"
+      ],
+      "key_paragraphs": [
+        "催供应商补齐资质",
+        "周五前回传时间表"
+      ],
+      "hash": "todo-followup-before"
+    },
+    "random-note": {
+      "title": "周末电影片单",
+      "tags": [
+        "#生活"
+      ],
+      "key_paragraphs": [
+        "补看一部科幻片"
+      ],
+      "hash": "movie-list-001"
+    }
+  },
+  "response": {
+    "text": "",
+    "hits": [],
+    "evidence": [],
+    "search_dimensions": [],
+    "uncovered_gaps": []
+  }
+}

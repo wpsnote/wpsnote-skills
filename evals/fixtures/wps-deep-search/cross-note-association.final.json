@@ -1,0 +1,72 @@
+{
+  "notes": {
+    "project-plan": {
+      "title": "北极星项目 Q3 规划草案",
+      "tags": [
+        "#项目/北极星",
+        "#规划"
+      ],
+      "key_paragraphs": [
+        "Q3 目标聚焦交付稳定性",
+        "预算需要在七月锁定",
+        "供应商切换会影响里程碑"
+      ],
+      "hash": "project-plan-before"
+    },
+    "weekly-report": {
+      "title": "北极星项目 周报 07-12",
+      "tags": [
+        "#项目/北极星",
+        "#周报"
+      ],
+      "key_paragraphs": [
+        "本周确认里程碑延后两周",
+        "预算仍未完全锁定"
+      ],
+      "hash": "weekly-report-before"
+    },
+    "risk-log": {
+      "title": "北极星项目 风险清单",
+      "tags": [
+        "#项目/北极星",
+        "#风险"
+      ],
+      "key_paragraphs": [
+        "供应商交付存在风险",
+        "如果预算继续延迟，Q3 首个里程碑可能顺延"
+      ],
+      "hash": "risk-log-before"
+    },
+    "random-note": {
+      "title": "健身打卡",
+      "tags": [
+        "#生活"
+      ],
+      "key_paragraphs": [
+        "周三跑了五公里"
+      ],
+      "hash": "fitness-log-001"
+    }
+  },
+  "response": {
+    "text": "和北极星项目 Q3 规划直接相关的核心材料包括《北极星项目 Q3 规划草案》《北极星项目 周报 07-12》和《北极星项目 风险清单》。规划草案提出预算需要在七月锁定，周报确认里程碑延后两周，风险清单则说明供应商交付存在风险，这三篇共同说明了预算、交付风险和里程碑变化之间的关联。",
+    "hits": [
+      "project-plan",
+      "weekly-report",
+      "risk-log"
+    ],
+    "evidence": [
+      "预算需要在七月锁定",
+      "里程碑延后两周",
+      "供应商交付存在风险"
+    ],
+    "search_dimensions": [
+      "topic",
+      "tags",
+      "cross_note_relation"
+    ],
+    "uncovered_gaps": [
+      "未看到单独的季度复盘总结页"
+    ]
+  }
+}

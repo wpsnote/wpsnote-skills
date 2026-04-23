@@ -1,0 +1,103 @@
+{
+  "id": "tag-organize-golden-skip-ambiguous-notes",
+  "suite": "golden",
+  "skill": "tag-organize",
+  "prompt": "我先拿标题里带 tag-e2e-003 的几篇笔记试一下标签整理。请给主题明确的笔记补上合适标签，但对看不出主题的那篇保持原样，并在结果里说明它为什么被跳过。",
+  "seed": {
+    "description": "通过 MCP 预置一篇主题明确笔记、一篇意图不明笔记和一篇无关对照笔记。",
+    "entities": [
+      "notes.clear_note",
+      "notes.ambiguous_note",
+      "notes.control_note"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "clear_note",
+      "kind": "note_snapshot",
+      "path": "notes.clear_note"
+    },
+    {
+      "id": "ambiguous_note",
+      "kind": "note_snapshot",
+      "path": "notes.ambiguous_note"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [],
+    "entities_expected_updated": [
+      "notes.clear_note"
+    ],
+    "entities_expected_unchanged": [
+      "notes.ambiguous_note",
+      "notes.control_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_contains",
+        "path": "notes.clear_note.tags",
+        "value": "#测评/tag-e2e-003/知识库",
+        "message": "主题明确笔记必须获得新标签"
+      },
+      {
+        "kind": "value_contains",
+        "path": "response.text",
+        "value": "未处理",
+        "message": "最终回答必须说明哪些笔记被跳过"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.ambiguous_note",
+        "message": "意图不明笔记不能被强行打标"
+      },
+      {
+        "kind": "path_changed",
+        "path": "notes.control_note",
+        "message": "控制笔记不能被污染"
+      }
+    ],
+    "tolerance_rules": []
+  },
+  "final_state_collectors": [
+    {
+      "id": "clear_note",
+      "kind": "note_snapshot",
+      "path": "notes.clear_note"
+    },
+    {
+      "id": "ambiguous_note",
+      "kind": "note_snapshot",
+      "path": "notes.ambiguous_note"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "response",
+      "kind": "response_payload",
+      "path": "response"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 25
+  },
+  "cleanup": {
+    "description": "删除标题含 tag-e2e-003 的测试笔记。"
+  }
+}

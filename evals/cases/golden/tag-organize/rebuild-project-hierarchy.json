@@ -1,0 +1,114 @@
+{
+  "id": "tag-organize-golden-rebuild-project-hierarchy",
+  "suite": "golden",
+  "skill": "tag-organize",
+  "prompt": "我在一组标题里带 tag-e2e-002 的项目笔记上试跑标签整理。请只处理这组笔记，把 `#测评/tag-e2e-002/Alpha` 和 `#测评/tag-e2e-002/Beta` 收进统一的项目父标签下面，别扩散到其他标签空间。",
+  "seed": {
+    "description": "通过 MCP 预置两个项目笔记、扁平标签和一个无关对照笔记，所有标签都放在独立测评命名空间。",
+    "entities": [
+      "notes.alpha_brief",
+      "notes.beta_plan",
+      "notes.control_note",
+      "tags.Alpha",
+      "tags.Beta"
+    ]
+  },
+  "original_state_collectors": [
+    {
+      "id": "alpha_brief",
+      "kind": "note_snapshot",
+      "path": "notes.alpha_brief"
+    },
+    {
+      "id": "beta_plan",
+      "kind": "note_snapshot",
+      "path": "notes.beta_plan"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "tags",
+      "kind": "tag_tree",
+      "path": "tags"
+    }
+  ],
+  "expected_state": {
+    "entities_expected_created": [
+      "tags.测评/tag-e2e-002/项目"
+    ],
+    "entities_expected_updated": [
+      "notes.alpha_brief",
+      "notes.beta_plan"
+    ],
+    "entities_expected_unchanged": [
+      "notes.control_note"
+    ],
+    "required_changes": [
+      {
+        "kind": "value_contains",
+        "path": "tags.测评/tag-e2e-002/项目.children",
+        "value": "Alpha",
+        "message": "项目父标签下必须包含 Alpha 子标签"
+      },
+      {
+        "kind": "value_contains",
+        "path": "tags.测评/tag-e2e-002/项目.children",
+        "value": "Beta",
+        "message": "项目父标签下必须包含 Beta 子标签"
+      },
+      {
+        "kind": "value_contains",
+        "path": "notes.alpha_brief.tags",
+        "value": "#测评/tag-e2e-002/项目/Alpha",
+        "message": "Alpha 笔记必须迁移到新层级标签"
+      },
+      {
+        "kind": "value_contains",
+        "path": "notes.beta_plan.tags",
+        "value": "#测评/tag-e2e-002/项目/Beta",
+        "message": "Beta 笔记必须迁移到新层级标签"
+      }
+    ],
+    "forbidden_changes": [
+      {
+        "kind": "path_changed",
+        "path": "notes.control_note",
+        "message": "层级重构不能污染控制笔记"
+      }
+    ],
+    "tolerance_rules": []
+  },
+  "final_state_collectors": [
+    {
+      "id": "alpha_brief",
+      "kind": "note_snapshot",
+      "path": "notes.alpha_brief"
+    },
+    {
+      "id": "beta_plan",
+      "kind": "note_snapshot",
+      "path": "notes.beta_plan"
+    },
+    {
+      "id": "control_note",
+      "kind": "note_snapshot",
+      "path": "notes.control_note"
+    },
+    {
+      "id": "tags",
+      "kind": "tag_tree",
+      "path": "tags"
+    }
+  ],
+  "grader": {
+    "mode": "outcome-only",
+    "report": "state_diff_report",
+    "max_diff_entries": 30
+  },
+  "cleanup": {
+    "description": "删除标题含 tag-e2e-002 的测试笔记，并回收对应的测评标签。"
+  }
+}

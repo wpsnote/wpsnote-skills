@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wpsnote.example/schemas/tri_state_case.schema.json",
+  "title": "Tri-state outcome-only eval case",
+  "type": "object",
+  "required": [
+    "id",
+    "skill",
+    "prompt",
+    "seed",
+    "original_state_collectors",
+    "expected_state",
+    "final_state_collectors",
+    "grader",
+    "cleanup"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "suite": {
+      "type": "string"
+    },
+    "skill": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "entities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "original_state_collectors": {
+      "$ref": "#/$defs/collectorList"
+    },
+    "final_state_collectors": {
+      "$ref": "#/$defs/collectorList"
+    },
+    "expected_state": {
+      "type": "object",
+      "required": [
+        "entities_expected_created",
+        "entities_expected_updated",
+        "entities_expected_unchanged",
+        "required_changes",
+        "forbidden_changes",
+        "tolerance_rules"
+      ],
+      "properties": {
+        "entities_expected_created": {
+          "$ref": "#/$defs/pathList"
+        },
+        "entities_expected_updated": {
+          "$ref": "#/$defs/pathList"
+        },
+        "entities_expected_unchanged": {
+          "$ref": "#/$defs/pathList"
+        },
+        "required_changes": {
+          "$ref": "#/$defs/assertionList"
+        },
+        "forbidden_changes": {
+          "$ref": "#/$defs/assertionList"
+        },
+        "tolerance_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/toleranceRule"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "grader": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string"
+        },
+        "report": {
+          "type": "string"
+        },
+        "max_diff_entries": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "cleanup": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "pathList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "collectorList": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "assertionList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/assertion"
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "required": [
+        "kind",
+        "path"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "path_exists",
+            "path_missing",
+            "path_changed",
+            "path_unchanged",
+            "value_equals",
+            "value_contains",
+            "value_contains_all",
+            "value_not_contains",
+            "count_equals",
+            "count_at_least",
+            "count_between",
+            "set_equals",
+            "regex_matches"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "value": {},
+        "values": {
+          "type": "array"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "toleranceRule": {
+      "type": "object",
+      "required": [
+        "kind",
+        "paths"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ignore_paths"
+          ]
+        },
+        "paths": {
+          "$ref": "#/$defs/pathList"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
