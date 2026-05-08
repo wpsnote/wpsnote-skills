@@ -184,6 +184,8 @@
 ```json
 {
   "shorthand_id": "sh_abc123",
+  "status": "completed",
+  "is_complete": true,
   "sentence_count": 42,
   "sentences": [
     {
@@ -197,6 +199,20 @@
   ]
 }
 ```
+
+**`status` 可选值**：
+
+| status | 含义 |
+|--------|------|
+| `recording` | 正在录音 |
+| `paused` | 录音暂停 |
+| `stopping` | 正在停止（过渡态） |
+| `stopped` | 录音已停止，等待智能处理 |
+| `processing` | 智能处理中（优化/总结） |
+| `completed` | 全部处理完成 |
+| `unknown` | 状态未知（获取状态失败时） |
+
+**`is_complete`**：当 `status` 为 `completed` 或 `stopped` 时为 `true`，表示转写内容已稳定可读取。
 
 **错误场景**：
 - 网络断开或 WebSocket 未连接 → `WEBSOCKET_NOT_CONNECTED`（retryable）
@@ -571,6 +587,48 @@
 **返回** `data`：标签数组。
 
 > **注意**：原 `list_tag_notes` 功能已移除，可使用 `search_notes({ tags: [...] })` 按标签筛选笔记。
+
+---
+
+### manage_note_tags
+
+管理笔记的文件级标签——添加或移除标签。不传 `add`/`remove` 时返回当前标签列表。
+
+```json
+{
+  "note_id": { "type": "string", "required": true, "description": "笔记 ID" },
+  "add": { "type": "array", "items": "string", "description": "要添加的标签名数组。已有同名标签自动复用，不存在的标签自动创建。多级标签用 / 分隔（如 '工作/项目'）" },
+  "remove": { "type": "array", "items": "string", "description": "要移除的标签名或标签 ID 数组。不存在的标签静默跳过" }
+}
+```
+
+`note_id` 必填，`add` 和 `remove` 至少传一个（都不传则为查询模式）。
+
+**返回** `data`：
+```json
+{
+  "note_id": "abc123",
+  "tags": [
+    { "id": "tag_001", "name": "工作" },
+    { "id": "tag_002", "name": "项目/Q1" }
+  ],
+  "added": ["工作", "项目/Q1"],
+  "removed": ["草稿"]
+}
+```
+
+- `tags`：更新后笔记的完整文件级标签列表
+- `added`：本次实际新增的标签名（已存在的标签不重复添加）
+- `removed`：本次实际移除的标签名（不存在的标签静默跳过）
+
+**标签命名规则**：
+- 多级标签用 `/` 分隔（如 "工作/项目"）
+- 每级最多 20 字符，最多 3 级
+- 不支持 `#`、`[`、`]`、空格、emoji 等字符
+
+**错误场景**：
+- `note_id` 未传 → `INVALID_PARAMS`
+- 当前环境不支持文件级标签 → `INTERNAL_ERROR`
 
 ---
 

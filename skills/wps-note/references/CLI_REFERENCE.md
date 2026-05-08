@@ -64,6 +64,7 @@
 | `cursor` | `get_cursor_block` | 获取当前光标所在顶层 block 的 ID 和类型 |
 | `find` | `search_notes` | 搜索笔记（关键词 / 标签 / 时间范围 / 收藏过滤 `--starred`） |
 | `tags` | `find_tags` | 列出或搜索标签 |
+| `manage-tags` | `manage_note_tags` | 管理笔记文件级标签（添加/移除） |
 | `sync` | `sync_note` | 同步笔记到云端 |
 | `delete` | `delete_note` | 删除笔记（不可恢复） |
 | `stats` | `get_note_stats` | 获取笔记使用统计 |
@@ -294,6 +295,15 @@ wpsnote-cli import-web --url "https://mp.weixin.qq.com/s/xxx" --json
 ```
 
 仅支持白名单域名（微信公众号、知乎、豆瓣等），非白名单域名会返回 `INVALID_PARAMS`。转换耗时约 5-30 秒。
+
+### 标签管理
+
+```bash
+wpsnote-cli manage-tags --note_id <id> --json-args '{"add":["工作","项目"]}' --json
+wpsnote-cli manage-tags --note_id <id> --json-args '{"remove":["草稿"]}' --json
+wpsnote-cli manage-tags --note_id <id> --json-args '{"add":["重要"],"remove":["临时"]}' --json
+wpsnote-cli manage-tags --note_id <id> --json                      # 查看当前标签
+```
 
 ### 获取当前笔记并继续处理
 

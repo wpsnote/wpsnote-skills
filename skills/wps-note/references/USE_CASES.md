@@ -230,7 +230,7 @@ get_xml_reference()
 
 **验证**：
 - [ ] 返回 `reference` 字段
-- [ ] 内容包含块级标签、行内标签、属性说明和写入示例
+- [ ] 内容包含块级标签、行内 mark、属性说明和写入示例
 
 ---
 
@@ -621,12 +621,38 @@ get_note_info({ note_id: "nr_d1" })
     tags: [{ id: "tag_010", name: "项目管理" }] }] }
 ```
 
-**关键模式**：使用 `find_tags` → `search_notes({ tags })` 按标签浏览。标签是笔记的属性，通过 `get_note_info` 查看详情，通过 `search_notes({ tags })` 按标签筛选笔记。
+**关键模式**：使用 `find_tags` → `search_notes({ tags })` 按标签浏览。标签是笔记的属性，通过 `get_note_info` 查看详情，通过 `search_notes({ tags })` 按标签筛选笔记。使用 `manage_note_tags` 管理笔记的文件级标签（添加/移除），无需编辑文档内容。
 
 **验证**：
 - [ ] `find_tags` 返回所有标签
 - [ ] `find_tags({ keyword })` 结果与关键词相关
 - [ ] `search_notes({ tags })` 返回该标签下的笔记
+
+---
+
+#### UC-M04a：文件级标签管理
+
+**Prompt**：`"给这篇笔记加上'工作'和'项目'标签" / "把'草稿'标签去掉"`
+
+**调用**：
+```
+manage_note_tags({ note_id: "<id>", add: ["工作", "项目"] })
+→ { note_id: "<id>", tags: [{ id: "tag_001", name: "工作" }, { id: "tag_002", name: "项目" }], added: ["工作", "项目"], removed: [] }
+
+manage_note_tags({ note_id: "<id>", remove: ["草稿"] })
+→ { note_id: "<id>", tags: [...], added: [], removed: ["草稿"] }
+
+manage_note_tags({ note_id: "<id>" })
+→ { note_id: "<id>", tags: [...], added: [], removed: [] }  // 查询模式
+```
+
+**关键模式**：`manage_note_tags` 直接操作文件级标签，无需编辑文档内容。add 传标签名数组（已有标签自动复用，新标签自动创建），remove 传标签名或 ID 数组（不存在的标签静默跳过）。不传 add/remove 时为查询模式。
+
+**验证**：
+- [ ] 添加标签后返回更新后的完整标签列表
+- [ ] `added` 字段仅包含实际新增的标签名（已存在的不重复）
+- [ ] 移除不存在的标签不报错
+- [ ] 查询模式返回当前标签列表
 
 ---
 
@@ -783,9 +809,11 @@ import_web_page({ url: "https://mp.weixin.qq.com/s/xxx" })
 ```
 1. create_note({ title: "2025-03-03 周报" })
    → { fileId: "nr_new1", title: "2025-03-03 周报" }
-2. get_note_outline({ note_id: "nr_new1" })
+2. manage_note_tags({ note_id: "nr_new1", add: ["周报", "工作"] })
+   → { note_id: "nr_new1", tags: [...], added: ["周报", "工作"], removed: [] }
+3. get_note_outline({ note_id: "nr_new1" })
    → { blocks: [{ id: "p_empty", type: "paragraph", preview: "" }] }
-3. batch_edit({ note_id: "nr_new1", operations: [
+4. batch_edit({ note_id: "nr_new1", operations: [
      { op: "replace", block_id: "p_empty", content: "<h1>2025-03-03 周报</h1>" },
      { op: "insert", anchor_id: "p_empty", position: "after",
        content: "<h2>本周完成</h2><p listType=\"bullet\" listLevel=\"0\"> </p><h2>进行中</h2><p listType=\"bullet\" listLevel=\"0\"> </p><h2>下周计划</h2><p listType=\"bullet\" listLevel=\"0\"> </p><h2>风险与阻塞</h2><p listType=\"bullet\" listLevel=\"0\"> </p>" }
@@ -793,7 +821,7 @@ import_web_page({ url: "https://mp.weixin.qq.com/s/xxx" })
    → { success: true }
 ```
 
-**关键模式**：`create_note` 创建空白笔记。使用 `batch_edit` 的 replace + insert 组合在一次原子操作中填充内容。单次 insert 的 content 可包含多个块级元素（如上例的 4 个 `<h2>` + `<p>` 对），按 XML 顺序依次插入，无需分多次调用。
+**关键模式**：`create_note` 创建空白笔记，随后 `manage_note_tags` 分配标签。使用 `batch_edit` 的 replace + insert 组合在一次原子操作中填充内容。单次 insert 的 content 可包含多个块级元素（如上例的 4 个 `<h2>` + `<p>` 对），按 XML 顺序依次插入，无需分多次调用。
 
 **验证**：
 - [ ] 新笔记创建成功
