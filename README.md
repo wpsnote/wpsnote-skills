@@ -218,7 +218,7 @@ python3 -m unittest evals.tests.test_tri_state_eval
 | 分类 | CLI 命令 | MCP 工具 | 说明 |
 |------|----------|----------|------|
 | 读取 | `wpsnote-cli outline` | `get_note_outline` | 获取结构大纲与 block_id，超大文档自动分页 |
-| 读取 | `wpsnote-cli read` | `read_note_content` | 读取笔记全文 XML |
+| 读取 | `wpsnote-cli read` | `read_note` | 读取笔记全文 XML |
 | 读取 | `wpsnote-cli section` | `read_section` | 按标题读取章节，支持 `block_offset` 续读 |
 | 读取 | `wpsnote-cli read-blocks` | `read_blocks` | 按 ID 批量读取 block |
 | 读取 | `wpsnote-cli search` | `search_note_content` | 笔记内搜索，编辑前精确定位 |
@@ -231,14 +231,11 @@ python3 -m unittest evals.tests.test_tri_state_eval
 | 管理 | `wpsnote-cli list` | `list_notes` | 列出笔记 |
 | 管理 | `wpsnote-cli create` | `create_note` | 创建空白笔记 |
 | 管理 | `wpsnote-cli info` | `get_note_info` | 获取笔记元数据 |
-| 管理 | `wpsnote-cli tags` | `list_tags` / `find_tags` | 列出全部标签或按关键词搜索标签 |
-| 管理 | `wpsnote-cli tag-notes` | `get_notes_by_tag` | 查看某个标签下的笔记 |
-| 管理 | `wpsnote-cli add-tags` | `add_note_tags` | 给笔记追加标签 |
-| 管理 | `wpsnote-cli remove-tags` | `remove_note_tags` | 从笔记移除标签 |
-| 管理 | `wpsnote-cli rename-tag` | `rename_tag` | 重命名标签 |
+| 管理 | `wpsnote-cli tags` | `find_tags` | 列出全部标签或按关键词搜索标签 |
+| 管理 | `wpsnote-cli find --json-args '{"tags":["标签名"]}'` | `search_notes({ tags: ["标签名"] })` | 查看某个标签下的笔记 |
+| 管理 | `wpsnote-cli manage-tags` | `manage_note_tags` | 管理笔记文件级标签（添加/移除/查询） |
 | 管理 | `wpsnote-cli import-web` | `import_web_page` | 导入支持域名的网页内容 |
-| 管理 | `wpsnote-cli trash` | `trash_note` | 将笔记移入回收站 |
-| 管理 | `wpsnote-cli delete` | `permanently_delete_note` | 永久删除回收站中的笔记 |
+| 管理 | `wpsnote-cli delete` | `delete_note` | 删除笔记（不可恢复，需确认） |
 
 # 社区与贡献
 

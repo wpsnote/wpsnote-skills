@@ -48,7 +48,7 @@ metadata:
 - **重要**：写入操作（`edit_block` 等）的 `block_id` / `anchor_id` 只接受顶层 block ID（由 `get_note_outline` 返回）。`read_note` XML 中容器（`<highlightBlock>`、`<columns>`、`<table>`）内部段落的 `id` 仅供阅读参考，不可用于写入操作。
 - 写入时提供 XML 格式内容，系统自动转换为内部 block 模型。`replace` 的目标 block 由工具参数 `block_id` 指定，`content` 建议不写 `id`；若显式写了根块 `id`，必须与目标 `block_id` 一致。`insert` 时新内容中的块级标签应省略 `id`，系统自动分配新的 `block_id`。
 - 行内 mark 使用语义标签：`<strong>粗体</strong>`、`<em>斜体</em>`、`<s>删除线</s>`、`<u>下划线</u>`、`<a href="url">链接</a>`。
-- **标签管理**：使用 `manage_note_tags` 工具管理笔记标签——直接添加/移除文件级标签，无需编辑文档内容。创建笔记后应调用 `manage_note_tags({ note_id, add: ["标签名"] })` 分配标签；编辑已有笔记完成后若无标签也应补充。
+- **标签管理**：使用 `manage_note_tags` 工具管理笔记标签——直接添加/移除文件级标签，无需编辑文档内容。创建笔记后应调用 `manage_note_tags({ note_id, add: ["标签名"] })` 分配标签；多级标签用 `/`，调用参数不要带 `#` 前缀；编辑已有笔记完成后若无标签也应补充。
 - 行内自闭合元素：`<emoji value="😀"/>`（表情）、`<latex formula="E=mc^2"/>`（行内公式）、`<br/>`（硬换行）。
 - 样式属性通过 `<span>` 传递：`<span fontColor="#C21C13">红色文字</span>`、`<span fontHighlightColor="#FBF5B3">高亮文字</span>`、`<span fontSize="16">大号文字</span>`。
 - **颜色受预设色板约束**，任意 hex 色值会被编辑器静默丢弃。各类颜色预设值：
