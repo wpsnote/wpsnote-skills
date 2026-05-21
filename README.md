@@ -81,6 +81,7 @@
 | [class-note-builder](./skills/class-note-builder) | 把课堂逐字稿、OCR 笔记、零散材料整理成结构化主笔记 |
 | [lecture-focus-extractor](./skills/lecture-focus-extractor) | 从长篇笔记 / 转写中提取最值得复习的重点 |
 | [misconception-finder](./skills/misconception-finder) | 检查笔记中的理解错误、概念混淆或逻辑跳步 |
+| [note-review-coach](./skills/note-review-coach) | 基于已有笔记生成不提前泄题的自测题，作答后按原文证据批改并给出错因反馈与复习建议 |
 | [notes-to-flashcards](./skills/notes-to-flashcards) | 将笔记转为可主动回忆的复习卡片 |
 | [notes-to-lesson-plan](./skills/notes-to-lesson-plan) | 将笔记整理为可讲给别人听的 teach-back 提纲 |
 | [prerequisite-gap-finder](./skills/prerequisite-gap-finder) | 找出学习卡点与缺失的前置知识 |
