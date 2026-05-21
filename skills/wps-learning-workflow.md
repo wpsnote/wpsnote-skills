@@ -13,6 +13,7 @@
 - 从卡壳推进到查漏补缺
 - 从理解偏差推进到修正与自测
 - 从孤立笔记推进到知识网络
+- 从静态笔记推进到可批改的自测闭环
 
 ## 标准流程
 
@@ -22,7 +23,7 @@
 4. 识别易混淆点与误解
 5. 检查前置知识缺口
 6. 关联历史笔记与旧洞见
-7. 生成闪卡、讲解提纲或下一轮复习任务
+7. 生成闪卡、讲解提纲、自测题或下一轮复习任务
 
 ## 标准输出块
 
@@ -53,10 +54,12 @@
 
 - `class-note-builder` -> `lecture-focus-extractor`
 - `lecture-focus-extractor` -> `notes-to-flashcards`
+- `lecture-focus-extractor` -> `note-review-coach`
 - `study-note-linker` -> `insight-recaller`
 - `prerequisite-gap-finder` -> `misconception-finder`
-- `misconception-finder` -> `notes-to-flashcards`
-- `notes-to-flashcards` -> 进入下一轮复习
+- `misconception-finder` -> `note-review-coach`
+- `notes-to-flashcards` -> `note-review-coach`
+- `note-review-coach` -> 根据错因进入下一轮复习
 - `notes-to-lesson-plan` -> 用讲给别人听的方式检验掌握程度
 
 ## WPS 场景下的额外要求

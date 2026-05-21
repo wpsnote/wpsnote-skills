@@ -70,13 +70,14 @@
     },
     {
       "name": "learning-skills",
-      "description": "学习场景：课堂笔记整理、复习重点提取、知识卡片、错误检查、前置知识补缺、知识网络构建",
+      "description": "学习场景：课堂笔记整理、复习重点提取、自测批改、知识卡片、错误检查、前置知识补缺、知识网络构建",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/class-note-builder",
         "./skills/lecture-focus-extractor",
         "./skills/misconception-finder",
+        "./skills/note-review-coach",
         "./skills/notes-to-flashcards",
         "./skills/notes-to-lesson-plan",
         "./skills/prerequisite-gap-finder",
