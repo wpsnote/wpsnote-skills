@@ -172,44 +172,6 @@ frontmatter 必需字段：
 
 创建新 Skill 的完整指南，请参考 [skill-creator](./skills/skill-creator/SKILL.md) 与 [claude-skills-complete-guide.md](./claude-skills-complete-guide.md)。
 
-# Outcome-Only E2E 评测
-
-仓库内置了一套 repo 级的 outcome-only 三态评测骨架，位置在 [./evals](./evals)。
-
-这套评测只看结果，不看工具调度链、不看 trace。每个 case 固定围绕三种状态：
-
-- `original_state`：执行前的真实基线
-- `expected_state`：期望达到的目标状态
-- `final_state`：执行后的真实观测状态
-
-首版覆盖 4 个重点 skill：
-
-- `doc-importer`
-- `tag-organize`
-- `web-importer`
-- `wps-deep-search`
-
-快速使用：
-
-```bash
-# 校验全部 case schema
-python3 evals/scripts/tri_state_eval.py validate evals/cases
-
-# 用原始快照和最终快照对单个 case 判分
-python3 evals/scripts/tri_state_eval.py grade \
-  --case evals/cases/golden/doc-importer/create-rich-import.json \
-  --original evals/fixtures/doc-importer/create-rich-import.original.json \
-  --final evals/fixtures/doc-importer/create-rich-import.final.json
-```
-
-自动化测试：
-
-```bash
-python3 -m unittest evals.tests.test_tri_state_eval
-```
-
-完整说明、schema、state guide 和示例 fixture 见 [./evals/README.md](./evals/README.md)。
-
 # 命令速查
 
 **核心操作模式**：先定位（`outline` / `search`）→ 再读取（`read`）→ 最后编辑（`edit`）
