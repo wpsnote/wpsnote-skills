@@ -2,7 +2,7 @@
 
 [![WPS 笔记首页](https://img.shields.io/badge/WPS笔记-首页-blue?style=flat-square)](https://ainote.kdocs.cn/)
 [![下载 WPS 笔记](https://img.shields.io/badge/WPS笔记-下载-green?style=flat-square)](https://ainote.kdocs.cn/wps-notes-hub/)
-[![加入交流群](https://img.shields.io/badge/微信-加入交流群-07C160?style=flat-square&logo=wechat)](https://365.kdocs.cn/l/cau3Z9vsAUQt)
+[![WPS 社区](https://img.shields.io/badge/WPS社区-交流反馈-FF6B35?style=flat-square)](https://bbs.wps.cn/topics/node/28)
 
 笔记，是思想落地的地方。
 
@@ -108,13 +108,13 @@
 
 1. 选择 `Browse and install plugins`
 2. 选择 `wpsnote-skills`
-3. 选择 `core-skills`、`content-skills`、`capture-skills`、`creative-skills` 或 `learning-skills`
+3. 选择 `base-skills`、`content-skills`、`capture-skills`、`creative-skills` 或 `learning-skills`
 4. 点击 `Install now`
 
 或直接安装：
 
 ```
-/plugin install core-skills@wpsnote-skills
+/plugin install base-skills@wpsnote-skills
 /plugin install content-skills@wpsnote-skills
 /plugin install capture-skills@wpsnote-skills
 /plugin install creative-skills@wpsnote-skills
@@ -219,15 +219,9 @@ frontmatter 必需字段：
 3. **检查冲突**：确认触发描述不与已有 Skill 重叠，底层能力复用 `wps-note`
 4. **提交 PR**：在 `skills/` 目录下新建子文件夹，确保包含完整的 `SKILL.md`
 
-**方式二**：有想法但没时间写代码？直接开一个 [Issue](https://github.com) 抛出你的脑洞。
+**方式二**：有想法但没时间写代码？直接开一个 [Issue](https://github.com/wpsnote/wpsnote-skills/issues) 抛出你的脑洞，或前往 [WPS 社区](https://bbs.wps.cn/topics/node/28) 交流反馈。
 
-[![加入 AI Skill 共创社区](https://img.shields.io/badge/WPS笔记-加入共创社区-FF6B35?style=flat-square)](https://365.kdocs.cn/l/cau3Z9vsAUQt)
-
-<p align="center">
-  <img src="./assets/wechat-group-qr.png" alt="微信交流群二维码" width="300" />
-  <br/>
-  <sub>微信扫码加入交流群</sub>
-</p>
+[![加入 WPS 社区](https://img.shields.io/badge/WPS笔记-加入WPS社区-FF6B35?style=flat-square)](https://bbs.wps.cn/topics/node/28)
 
 ## 贡献者
 
