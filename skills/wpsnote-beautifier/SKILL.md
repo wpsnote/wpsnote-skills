@@ -1,17 +1,19 @@
 ---
 name: wpsnote-beautifier
-description: 智能美化 WPS 笔记文档，采用克制统一的配色风格（全文仅1种主色调，不混用多色系）。核心能力：优化标题层级结构、用高亮块强调核心结论与注意事项、用分栏展示对比或并列内容、应用统一配色方案并写入。仅当用户明确表达美化需求时才触发，例如：美化笔记、排版优化、文档美化、笔记排版、WPS笔记美化、智能排版、文档结构调整、加颜色、加高亮、加分栏、让笔记好看点、优化文档格式、笔记太丑了、调整排版、加点样式、给笔记润色、整理笔记格式、提升可读性。不要在用户仅要求写入内容、编辑文字、总结归纳等非美化场景下主动触发此skill。通过 user-wpsnote MCP 服务操作 WPS 笔记文档。
+description: 智能美化 WPS 笔记文档，采用克制统一的配色风格（全文仅1种主色调，不混用多色系）。核心能力：优化标题层级结构、用高亮块强调核心结论与注意事项、用分栏展示对比或并列内容、应用统一配色方案并写入。仅当用户明确表达美化需求时才触发，例如：美化笔记、排版优化、文档美化、笔记排版、WPS笔记美化、智能排版、文档结构调整、加颜色、加高亮、加分栏、让笔记好看点、优化文档格式、笔记太丑了、调整排版、加点样式、给笔记润色、整理笔记格式、提升可读性。不要在用户仅要求写入内容、编辑文字、总结归纳等非美化场景下主动触发此skill。通过云端 wpsnote MCP 服务操作 WPS 笔记文档。
 metadata:
   author: huziyu
   version: 1.0.0
-  mcp-server: user-wpsnote
+  mcp-server: wpsnote
 ---
 
 # WPS 笔记智能美化
 
 ## 概述
 
-对 WPS 笔记进行智能美化，包括：结构层级优化、高亮块/分栏强调重点、配色方案应用、富文本样式写入。通过 WPS 笔记 MCP 工具（`user-wpsnote`）完成所有读写操作。
+对 WPS 笔记进行智能美化，包括：结构层级优化、高亮块/分栏强调重点、配色方案应用、富文本样式写入。
+
+> XML 语法、预设色板上限与写入规则见 [wpsnote](../wpsnote/SKILL.md)（写前可查 `get_xml_reference`）。
 
 ## 颜色克制总原则（最高优先级）
 
@@ -107,17 +109,17 @@ metadata:
 
 | 场景 | 背景色 | 边框色 | 推荐 emoji |
 |------|--------|--------|-----------|
-| 核心结论/要点 | `#E8F5E9` | `#4CAF50` | ✅ 或 💡 |
-| 重要提示/注意 | `#FFF3E0` | `#FF9800` | ⚠️ 或 📌 |
-| 警告/风险 | `#FFEBEE` | `#F44336` | ❗ 或 🚨 |
-| 引用/摘要 | `#E3F2FD` | `#2196F3` | 📖 或 💬 |
-| 定义/术语 | `#F3E5F5` | `#9C27B0` | 📝 或 🔍 |
-| 最佳实践 | `#E0F7FA` | `#00BCD4` | ⭐ 或 🎯 |
+| 核心结论/要点 | `#E6FAEB` | `#AFE3BB` | ✅ 或 💡 |
+| 重要提示/注意 | `#FAF1E6` | `#FEC794` | ⚠️ 或 📌 |
+| 警告/风险 | `#FAE6E6` | `#F2A7A7` | ❗ 或 🚨 |
+| 引用/摘要 | `#E6EEFA` | `#98C1FF` | 📖 或 💬 |
+| 定义/术语 | `#F5EBFA` | `#E5B5FD` | 📝 或 🔍 |
+| 辅助/中性说明 | `#EBEBEB` | `#C5C5C5` | ⭐ 或 🎯 |
 
 ### 高亮块 XML 写法
 
 ```xml
-<highlightBlock emoji="💡" highlightBlockBackgroundColor="#E8F5E9" highlightBlockBorderColor="#4CAF50">
+<highlightBlock emoji="💡" highlightBlockBackgroundColor="#E6FAEB" highlightBlockBorderColor="#AFE3BB">
   <p><strong>核心结论</strong></p>
   <p>这里是需要强调的重点内容。</p>
 </highlightBlock>
@@ -148,13 +150,13 @@ metadata:
 
 ```xml
 <columns>
-  <column columnBackgroundColor="#E8F5E9">
-    <p><strong><span fontColor="#2E7D32">优势</span></strong></p>
+  <column columnBackgroundColor="#E8FCEF">
+    <p><strong><span fontColor="#078654">优势</span></strong></p>
     <p>第一个优点说明</p>
     <p>第二个优点说明</p>
   </column>
-  <column columnBackgroundColor="#FFEBEE">
-    <p><strong><span fontColor="#C62828">劣势</span></strong></p>
+  <column columnBackgroundColor="#FFECEB">
+    <p><strong><span fontColor="#C21C13">劣势</span></strong></p>
     <p>第一个缺点说明</p>
     <p>第二个缺点说明</p>
   </column>
@@ -174,10 +176,10 @@ metadata:
 
 ### 标题颜色
 
-通过 `<span fontColor="...">` 包裹标题文字：
+通过 `<span fontColor="...">` 包裹标题文字（所有色值必须取自 WPS 预设色板，详见 `reference/color-schemes.md` 与 `get_xml_reference`）：
 
 ```xml
-<h2><span fontColor="#1565C0">章节标题</span></h2>
+<h2><span fontColor="#0E52D4">章节标题</span></h2>
 ```
 
 标题颜色应全文统一：同级标题用同一颜色。
@@ -187,7 +189,7 @@ metadata:
 关键术语、重点词汇使用加粗 + 颜色：
 
 ```xml
-<p>这是一段文字，其中<strong><span fontColor="#D84315">关键概念</span></strong>被突出显示。</p>
+<p>这是一段文字，其中<strong><span fontColor="#DB7800">关键概念</span></strong>被突出显示。</p>
 ```
 
 ### 行内高亮
@@ -195,7 +197,7 @@ metadata:
 对少量关键词使用背景高亮：
 
 ```xml
-<p>使用 <span fontHighlightColor="#FFF9C4">核心方法</span> 实现目标。</p>
+<p>使用 <span fontHighlightColor="#FBF5B3">核心方法</span> 实现目标。</p>
 ```
 
 ### 颜色使用原则
@@ -245,9 +247,5 @@ metadata:
 
 ## 关键约束
 
-1. **block_id 随时可能变化** — 每次写入前必须通过 `get_note_outline` 刷新
-2. **batch_edit 执行顺序固定** — delete → replace → update_attrs → insert（与数组顺序无关）
-3. **anchor_id 只接受顶层 block ID** — 容器内部（高亮块、分栏、表格内）的段落 id 不可用于写入
-4. **表格须整表替换** — 对表格 block 调用 `edit_block(op="replace")`
-5. **只读标签不可创建** — `<img/>`、`<embed/>`、`<imageColumn/>`、`<tag>` 无法通过 XML 创建
-6. **新建 block 不需要 id** — 系统自动分配
+- **只读与整表限制**：表格须整表替换（对表格 block `replace`）；`<img/>`、`<embed/>`、`<imageColumn/>`、`<tag>` 不可通过 XML 创建。
+- **底层写入与色板约定**：`block_id` 刷新、顶层 ID、`batch_edit` 执行顺序及预设色板限制见核心 skill [wpsnote](../wpsnote/SKILL.md)。

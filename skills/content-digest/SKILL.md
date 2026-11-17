@@ -2,10 +2,10 @@
 name: content-digest
 description: 将任意内容提炼为结构化知识笔记，自动保存到 WPS 笔记。只要用户给出任何内容（链接、图片、本地文件、粘贴文字）并有保存笔记的意图，就应使用此 skill。常见触发词：「总结」「提炼」「做笔记」「读书笔记」「学习笔记」「整理成笔记」「帮我看看」「帮我解读」「记一下」「存下来」「整理一下」「帮我归纳」。也适用于用户直接给出 URL、@图片、@文件但没有明确说「存笔记」的情况——只要内容值得保存，主动使用此 skill。支持网页、公众号、本地 PDF/Word/TXT/Markdown/图片/截图、粘贴文本；所有图片（本地截图、网络图片、PDF 图片页、笔记内图片）均可自动视觉解读；输出一句话概括、核心观点、金句摘录、我的思考；多篇合并为一篇笔记。不用于：代码重构、纯技术问答、文件编辑、仅讨论链接（无保存意图）、日常聊天。
 allowed-tools: "Read WebFetch Bash(pip3:*) Bash(python3:*)"
-compatibility: 需要 wps-note MCP 服务器已连接；需要 Python 3 环境（用于图片类 PDF 转换，首次运行会自动安装 pymupdf）；需要支持读取本地文件和图片、WebFetch 工具抓取网页内容。
+compatibility: 需要 wpsnote MCP 服务器已连接；需要 Python 3 环境（用于图片类 PDF 转换，首次运行会自动安装 pymupdf）；需要支持读取本地文件和图片、WebFetch 工具抓取网页内容。
 metadata:
   author: zoez
-  mcp-server: wps-note
+  mcp-server: wpsnote
   version: "3.7.1"
   category: productivity
   tags: [content-digest, summarization, knowledge-capture, image-analysis]
@@ -14,6 +14,8 @@ metadata:
 # Content Digest — 万能内容提炼
 
 将任意来源的内容转化为结构化知识笔记，自动保存到 WPS 笔记。
+
+> WPS 笔记接口、XML 规则与错误码见 [wpsnote](../wpsnote/SKILL.md)（写前不确定格式可查 `get_xml_reference`）。
 
 ## 工作流
 
@@ -79,18 +81,11 @@ metadata:
 
 ### 第三步：新建笔记并写入
 
-> ⚠️ **`batch_edit` 写入规则**：
-> - **多个独立 `insert` 操作指向同一锚点**时，实际顺序与数组顺序**相反**（WPS MCP 行为）→ 需倒序排列
-> - **单个 `insert` 操作内部包含多个 block 的 XML 字符串**时，块的顺序就是文档中出现的顺序 → **无需倒序**，按正常阅读顺序写即可
-
 ```
 1. create_note({ title: "[内容标题] · 提炼 [YYYY-MM-DD]" })
 2. get_note_outline(note_id)         → 获取初始 block ID
-3. batch_edit(note_id, [...])        → 倒序排列，一次性写入全部内容
-4. sync_note(note_id)                → 同步到云端（失败时见故障排查）
+3. batch_edit(note_id, [...])        → 一次性写入全部内容（写入规则见核心 skill wpsnote）
 ```
-
-写入后若需追加内容，必须先调用 `get_note_outline` 刷新 block ID，再进行下一次写入——WPS MCP 写入后 block ID 可能变化，使用缓存 ID 会导致 `BLOCK_NOT_FOUND`。
 
 ### 质量检查（写入前必做）
 - 每个模板定义的模块已完整输出，无跳过（文字类：一句话概括 / 核心观点 / 金句摘录；图片类：一句话概括 / 内容解读 / 核心信息）
@@ -176,6 +171,4 @@ python3 scripts/pdf_to_images.py /path/to/file.pdf
 | `IMAGE_FETCH_FAILED` | 图片 URL 必须直接返回 image/* 内容；若失败改用 `Read(url图片)` 直接视觉分析 |
 | `read_image` 返回空 | 图片 block 刚插入可能需 1-2 秒渲染，稍等后重试；确认 block_id 来自 `get_note_outline` 而非缓存 |
 | 网页图片无法提取 | WebFetch 无法下载图片二进制；改用 `insert_image(img_url)` + `read_image` 路径 |
-| `BLOCK_NOT_FOUND` | 重新调用 `get_note_outline` 获取最新 block ID，不使用缓存 ID |
-| `sync_note` 失败 | 笔记内容已写入本地，提示用户「同步失败，笔记内容已保存，请在 WPS 笔记客户端中手动同步」；不重新创建笔记 |
-| `WEBSOCKET_NOT_CONNECTED` | 提示用户检查 WPS 笔记是否已打开并登录 |
+| 其他 WPS 读写/服务端错误 | 按核心 skill `wpsnote`（`ERROR_CODES.md`）处理 |

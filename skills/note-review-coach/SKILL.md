@@ -33,13 +33,12 @@ allowed_tools:
   - edit_block
   - batch_edit
   - manage_note_tags
-  - sync_note
   - get_xml_reference
   - ask_user
 metadata:
   category: learning
   tags: [review, retrieval-practice, quiz, grading, note-learning]
-  dependencies: [wps-note]
+  dependencies: [wpsnote]
 ---
 
 # Note Review Coach
@@ -144,4 +143,4 @@ C. 混合诊断：少量范围回忆 + 主要理解/能力题，答完批改
 复习记录 - <原笔记标题或主题> - <日期>
 ```
 
-保存后可添加 `复习` 标签；用户要求同步时调用 `sync_note`。
+保存后可调用 `manage_note_tags` 添加 `复习` 标签。

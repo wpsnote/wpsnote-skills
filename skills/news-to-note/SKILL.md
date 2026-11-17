@@ -9,7 +9,7 @@ description: >
 metadata:
   version: 1.0.0
   mcp-server: wpsnote
-  tags: [news, insight, knowledge-base, wps-note]
+  tags: [news, insight, knowledge-base, wpsnote]
 ---
 
 # 新闻智能解读 — 用你的笔记知识库读懂每一条新闻
@@ -36,7 +36,9 @@ metadata:
 - 用户要求**批量搜索**、做简报汇总 → A
 - 模糊时默认 B
 
-**不适用于**：笔记的常规读写编辑（用 wps-note Skill）、非新闻类内容保存、纯知识问答。
+**不适用于**：笔记的常规读写编辑（用 `wpsnote` Skill）、非新闻类内容保存、纯知识问答。
+
+> WPS 笔记接口与标签规范见 [wpsnote](../wpsnote/SKILL.md)。
 
 ---
 
@@ -50,7 +52,7 @@ metadata:
 2. **规范化与去重**：清除 `utm_*` 等跟踪参数，以 URL 去重，避免重复写入。
 3. **定位目标笔记**：标题格式 `新闻简报 YYYY-MM-DD`，先搜后建。
 4. **写入内容**：刷新大纲获取 `block_id`，用 `edit_block(op=insert)` 追加 `<h2>` 标题 + `<p><a>` 链接 + `<p>` 摘要。
-5. **同步**：`sync_note`，回报插入条数。
+5. **完成回报**：向用户回报插入条数与笔记链接。
 
 ---
 
@@ -82,13 +84,14 @@ edit_block(op=insert) 写入元信息：
 
 ```xml
 <h1>文章标题</h1>
-<p><tag>#新闻</tag> <tag>#新闻//领域标签</tag></p>
 <highlightBlock emoji="🔗" highlightBlockBackgroundColor="#E6EEFA" highlightBlockBorderColor="#98C1FF">
   <p><strong>来源：</strong><a href="原文URL">来源名称</a></p>
   <p><strong>发布时间：</strong>YYYY-MM-DD</p>
 </highlightBlock>
 <h2>正文</h2>
 ```
+
+> 标签通过 `manage_note_tags({ note_id, add: ["新闻", "新闻/领域标签"] })` 写入文件级标签（多级用 `/` 分隔，参数不带 `#`）。
 
 **分次追加 — 正文分段写入：**
 
@@ -108,18 +111,17 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 - 标题、标签、来源等元信息可以一次性写入。
 - **正文禁止一次性写入**，必须分批追加，每批 3-5 个 `<p>` 段落。
 - 连续 insert 直接使用返回的 `last_block_id` 做锚点，无需每次刷新大纲。
-- 最后一批写完后调用 `sync_note` 同步。
 
-标签策略：始终加 `#新闻`，按内容加二级标签如 `#新闻//AI`、`#新闻//金融`，每篇 1-3 个。
+标签策略：通过 `manage_note_tags` 始终加 `新闻`，按内容加二级标签如 `新闻/AI`、`新闻/金融`，每篇 1-3 个。
 
 ### B3. 检索用户知识库（关键步骤）
 
 **核心差异化：不只搜新闻，搜用户的所有笔记。**
 
 提取 3-5 个关键词，在**整个笔记库**中多维度检索：
-- 按关键词全文搜索（公司名、技术名、行业名、人物名）
-- 按领域标签搜索历史新闻
-- 按时间范围搜索近期笔记
+- 按关键词全文搜索：`search_notes({ keywords: [...] })`（公司名、技术名、行业名、人物名）
+- 按领域标签浏览：`find_tags({ keywords: ["新闻"] })` → `get_notes_by_tag({ tag_id })`
+- 按时间范围浏览：`list_notes({ start_date: "yyyy-mm-dd", end_date: "yyyy-mm-dd" })`
 
 工作笔记、会议记录、项目文档都是有价值的关联源。详细检索策略见 [knowledge-search-strategy.md](references/knowledge-search-strategy.md)。
 
@@ -151,8 +153,8 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 
 操作：
 1. `web_fetch` 抓取全文 → 提取标题"OpenAI 获 1100 亿美元融资"
-2. `create_note` → `edit_block` 写入元信息和标签 → 分次追加正文段落 → `sync_note`
-3. `search_notes(keyword="OpenAI")` + `search_notes(keyword="AI 融资")` + `search_notes(keyword="大模型")` 检索知识库
+2. `create_note` → `manage_note_tags` 打标 → `edit_block` 写入元信息 → 分次追加正文段落
+3. `search_notes(keywords=["OpenAI"])` + `search_notes(keywords=["AI 融资"])` + `search_notes(keywords=["大模型"])` 检索知识库
 4. 发现用户有"AI 战略规划"笔记和"竞品分析"文档 → `read_note` 读取
 5. 输出：新闻要点 + "你在'AI 战略规划'中提到关注 OpenAI 的 API 定价策略，这笔融资可能加速其降价节奏" + 行动建议
 
@@ -164,8 +166,8 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 
 操作：
 1. `web_search("DeepSeek 最新动态 2026")` → 找到最权威报道 → `web_fetch` 抓取
-2. 保存到笔记，打 `#新闻//AI` 标签
-3. `search_notes(keyword="DeepSeek")` + `search_notes(keyword="开源模型")` 检索知识库
+2. 保存到笔记，用 `manage_note_tags({ note_id, add: ["新闻", "新闻/AI"] })` 打标
+3. `search_notes(keywords=["DeepSeek"])` + `search_notes(keywords=["开源模型"])` 检索知识库
 4. 发现用户之前保存过一篇"DeepSeek-V3 发布"的新闻 → 对比时间线
 5. 输出：最新动态 + "对比你之前收藏的 DeepSeek-V3 报道..." + 趋势分析
 
@@ -180,7 +182,6 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 2. 去重筛选出 5-8 条高价值条目
 3. 创建/定位"新闻简报 2026-03-12"笔记
 4. 写入分类简报（带链接和摘要）
-5. 同步笔记
 
 结果：当日 AI 新闻简报已写入笔记。
 
@@ -190,11 +191,11 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 
 ### 工作流 A
 
-1. 搜索工具获取新闻 → 2. `search_notes` / `create_note` 定位笔记 → 3. `get_note_outline` → 4. `edit_block(op="insert")` → 5. `sync_note`
+1. 搜索工具获取新闻 → 2. `list_notes` / `search_notes` / `create_note` 定位笔记 → 3. `get_note_outline` → 4. `edit_block(op="insert")`
 
 ### 工作流 B
 
-1. `web_fetch` / `web_search` 获取新闻 → 2. `create_note` → 3. `edit_block(op="insert")` 写入元信息 → 4. **分次** `edit_block(op="insert")` 追加正文（每次 3-5 段，用 `last_block_id` 做锚点） → 5. `sync_note` → 6. 多组 `search_notes` 检索知识库 → 7. `read_note` / `read_section` 读取关联 → 8. 输出 insight
+1. `web_fetch` / `web_search` 获取新闻 → 2. `create_note` → 3. `manage_note_tags` + `edit_block(op="insert")` 写入元信息 → 4. **分次** `edit_block(op="insert")` 追加正文（每次 3-5 段，用 `last_block_id` 做锚点） → 5. 多组 `search_notes` / `get_notes_by_tag` 检索知识库 → 6. `read_note` / `read_section` 读取关联 → 7. 输出 insight
 
 始终遵循：定位 → 读取/刷新 → 写入。
 
@@ -202,13 +203,11 @@ edit_block(op=insert, anchor_id=新的last_block_id, position=after)
 
 | 错误场景 | 处理方式 |
 |----------|----------|
-| `EDITOR_NOT_READY` / `FRONTEND_TIMEOUT` | 短暂等待后重试 |
-| `BLOCK_NOT_FOUND` | `get_note_outline` 刷新后重试 |
-| `DOCUMENT_READ_ONLY` | 停止写入，告知用户 |
 | 搜索结果为空（A） | 回报"无新增"，不写入空内容 |
 | 新闻获取失败（B） | 有链接回退 `web_search`；无链接扩大搜索；仍无则告知用户 |
 | 知识库无关联（B） | 正常保存，给通用分析，提示"随着笔记积累分析会更精准" |
 | 文章过长 | 分段写入；分析聚焦关键段落 |
+| WPS 读写/权限/限流错误 | 按核心 skill `wpsnote` 处理 |
 
 ## 资源
 

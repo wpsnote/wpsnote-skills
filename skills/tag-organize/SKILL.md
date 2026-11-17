@@ -1,6 +1,6 @@
 ---
 name: tag-organize
-description: 笔记文件级标签整理的核心原则与完整工作流程。用户提到"整理笔记标签"、"清理标签"、"标签太乱"、"标签太多"、"帮我打标签"、"重构标签"、"重新分类"、"笔记分类混乱"、"标签体系需要优化"时必须使用；基于 wps-note MCP 的 get_note_stats、find_tags、get_note_info、search_notes、manage_note_tags 等工具执行，不通过编辑 block 或 <tag> XML 管理标签。
+description: 笔记文件级标签整理的核心原则与完整工作流程。用户提到"整理笔记标签"、"清理标签"、"标签太乱"、"标签太多"、"帮我打标签"、"重构标签"、"重新分类"、"笔记分类混乱"、"标签体系需要优化"时必须使用；基于云端 wpsnote MCP 的 find_tags、list_tags、list_notes、get_notes_by_tag、get_note_info、manage_note_tags、rename_tag 等工具执行，不通过编辑 block 或正文 tag XML 管理标签。
 when_to_use: |
   用户说整理笔记标签/清理标签/标签太乱/标签太多/帮我打标签/
   重构标签/重新分类/笔记分类混乱/标签体系需要优化。
@@ -9,12 +9,12 @@ when_not_to_use: |
   单篇笔记加一个标签直接操作不需要此技能。
 aliases: [标签整理, 清理标签, 标签管理, 标签分类, 打标签]
 author: wps
-compatibility: 需要 WPS 笔记 wps-note MCP 工具可用
+compatibility: 需要 WPS 笔记 wpsnote MCP 工具可用
 metadata:
   author: wps
   version: 1.1.1
   category: note-organization
-  tags: [wps-note, file-level-tags, note-organization]
+  tags: [wpsnote, file-level-tags, note-organization]
 ---
 
 # 笔记标签整理核心原则与流程
@@ -35,16 +35,16 @@ metadata:
 
 ## 操作安全约束
 
-**当前阶段只做打标。** 笔记标签是文件级独立对象，通过 wps-note 专用工具 `manage_note_tags` 增删改；不要再通过 `edit_block`、`batch_edit` 或 `<tag>` XML 修改标签。
+**当前阶段只做打标。** 笔记标签是文件级独立对象，通过 wpsnote 专用工具 `manage_note_tags` 增删改；不要再通过 `edit_block`、`batch_edit` 或 `<tag>` XML 修改标签。
 
 硬性规则，每次操作都必须遵守：
 
-1. **修改标签只用 `manage_note_tags`**：
-   - 查询某笔记当前标签：`manage_note_tags({ note_id })`（只传 note_id 即为查询）
-   - 添加：`manage_note_tags({ note_id, add: ["工作/项目"] })`
-   - 删除：`manage_note_tags({ note_id, remove: ["旧标签"] })`
-   - 重命名 / 合并：在同一次调用中组合 `remove` + `add`
-   - 传给工具的标签名不带 `#` 前缀；`#工作/项目` 只用于对用户展示时的习惯写法
+1. **修改标签只用标签专用工具**：
+   - 查询某笔记当前标签：`get_note_info({ note_id })`（或 `manage_note_tags({ note_id })`）
+   - 单篇增删：`manage_note_tags({ note_id, add: ["工作/项目"], remove: ["<tag_id或path>"] })`（也可用 `add_note_tags` / `remove_note_tags`）
+   - 批量打标：`manage_note_tags({ operations: [{ note_id, add: [...], remove: [...] }, ...] })`（单批最多 100 项，建议 ≤ 50 项）
+   - 全局改名（仅末级名称）：优先直接调用 `rename_tag({ tag_id, new_name })`，无需逐篇修改笔记
+   - 传给 `add` 的标签名不带 `#` 前缀；移除时优先传 `tag_id` 或完整 `path`，避免重名歧义；`#工作/项目` 只用于对用户展示时的习惯写法
 
 2. **跨笔记的全局操作必须先 `ask_user` 确认**：标签的全局重命名、合并、批量删除（影响 2 篇以上笔记）属于跨笔记批量操作，执行前必须调用 `ask_user`。
 
@@ -92,14 +92,12 @@ metadata:
 
 #### 第一层：必做（全局概览）
 
-1. **`get_note_stats({ detailed: true })`** — 一次调用获得：
-   - 文件总数、标签总数、无标签文件数
-   - 每个标签下的文件数量分布（按笔记数降序，最多返回 30 个；标签较多时结合 `find_tags()` 看全量）
-   - 近期更新的文件列表
+1. **`find_tags()` / `list_tags({ limit: 100 })`** — 获得：
+   - 完整的标签层级结构（`tag_id`、`name`、`path`、`level`、`parent_id`）
+   - 当标签超过 1000 个（`find_tags` 返回 `truncated: true`）时，改用 `list_tags({ limit: 100, cursor })` 按 `next_token` 游标分页拉取全量
 
-2. **`find_tags()`** — 获得：
-   - 完整的标签层级结构（父子关系、命名）
-   - 识别命名风格、层级逻辑、可疑标签名
+2. **`list_notes({ limit: 100, order_by: "update_time", order_direction: "DESC" })` 与 `get_notes_by_tag({ tag_id })`** — 获得：
+   - 全量笔记列表（`list_notes` 列表项不返回 `tags` 字段）与各标签下的笔记集合；通过 `get_notes_by_tag` 可统计每个标签的笔记数分布，并与 `list_notes` 做差集识别无标签笔记（单篇确认可调 `get_note_info({ note_id })`）
 
 完成这两步后，通常已能发现大多数问题（颗粒度失衡、命名不一致、无标签文件过多等），并形成整理方向的初步判断。
 
@@ -109,14 +107,14 @@ metadata:
 
 | 想了解的内容 | 用哪个工具 |
 |---|---|
-| 某个可疑标签下都有哪些文件 | `search_notes({ tags: ["标签名"] })` |
-| 无标签的文件有哪些 | `get_note_info({ limit, page })` 分页查询，过滤 `tags` 为空的笔记 |
-| 某篇笔记当前挂着哪些标签 | `manage_note_tags({ note_id })`（只传 note_id 即为查询） |
+| 某个可疑标签下都有哪些文件 | `get_notes_by_tag({ tag_id: "<tag_id或完整path>", limit: 100 })` |
+| 无标签的文件有哪些 | 通过 `list_notes`（`cursor` 游标分页）减去各标签下 `get_notes_by_tag` 的 `note_id` 集合，或逐篇调 `get_note_info` 确认 `tags` 为空 |
+| 某篇笔记当前挂着哪些标签 | `get_note_info({ note_id })` |
 | 某篇文件大概讲什么 | `get_note_outline({ note_id })` |
 | 某篇文件的某几个 block 的精确内容 | `read_blocks({ note_id, block_ids })` |
 | 某篇文件的完整内容（需要深度理解内容时） | `read_note({ note_id })`，不加 `max_length` 限制 |
 
-**原则：用最轻量的工具满足当前需求**：`get_note_outline` 能定位时优先用它；`search_notes({ tags: [...] })` 能筛选时优先用它；仅在需要完整内容理解时才用 `read_note`。
+**原则：用最轻量的工具满足当前需求**：`get_note_outline` 能定位时优先用它；`get_notes_by_tag` 能筛选时优先用它；仅在需要完整内容理解时才用 `read_note`。
 
 ---
 
@@ -256,8 +254,8 @@ metadata:
 执行完成后，主动验证结果。
 
 **必须验证两个层面：**
-1. **目标笔记的标签**：从 `manage_note_tags` 写入操作的返回值检查——`tags` 是更新后的完整标签列表，`added` / `removed` 是实际生效的项；确认目标标签在 `tags` 中、层级以 `/` 正确体现
-2. **系统标签列表**（`find_tags()`）：确认新标签已创建、合并/删除的旧标签已消失，整体结构符合方案
+1. **目标笔记的标签**：从 `manage_note_tags` 写入操作的返回值检查——单篇模式看 `current_tags`（批量模式看 `results[]` 中各项的 `current_tags`），确认目标标签存在且层级以 `/` 正确体现
+2. **系统标签列表**（`find_tags()` / `list_tags()`）：确认新标签已创建、合并/删除的旧标签已消失，整体结构符合方案
 
 **情况一：结果与预期一致**
 

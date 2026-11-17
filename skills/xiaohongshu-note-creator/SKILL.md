@@ -9,7 +9,7 @@ metadata:
   version: "1.1.0"
   category: content-creation
   tags: [xiaohongshu, note, image, copywriting]
-  dependencies: [wps-note, image-gen]
+  dependencies: [wpsnote]
   scripts:
     - comm_script/image_gen.py
 ---
@@ -76,13 +76,13 @@ MCP 降级：`read_image({ note_id, block_id })`
 1. Step 2 读取源笔记时，必须扫描所有 `image` block，优先用 CLI 读取 base64 并**立刻用视觉理解描述图片内容**（见 Step 2 第 3 步）：
    ```bash
    wpsnote-cli read-image --note_id {note_id} --block_id {block_id} --json
-   # 返回 data.image_base64 字段
+   # 从返回 CallToolResult 的 content[] 中 type="image" 项读取 data（base64）
    ```
    MCP 降级：`read_image({ note_id, block_id })`
 2. 生图时，根据页面内容就近选取一张原文图片作为垫图：
    ```bash
-   # 先将 base64 保存为临时文件
-   python3 -c "import base64; open('/tmp/ref_pN.jpg','wb').write(base64.b64decode('{data.image_base64}'))"
+   # 先将取到的 base64 data 保存为临时文件
+   python3 -c "import base64; open('/tmp/ref_pN.jpg','wb').write(base64.b64decode('{image_base64_data}'))"
    # 再传入 --image
    python3 scripts/image_gen.py ... --image /tmp/ref_pN.jpg
    ```
@@ -223,6 +223,7 @@ MCP 降级：`read_image({ note_id, block_id })`
 1. 调用 `get_note_outline(note_id)` 获取当前 block 结构，记录最后一个 block 的 id 作为首次 `anchor_id`
 2. **将所有页面内容一次性拼成完整 XML 字符串**，用一次 `edit_block` 的 `insert` 写入，避免分多次调用导致乱序或 block_id 失效
 3. 如必须分批写入：每次 insert 后取返回的 `last_block_id` 作为下次的 `anchor_id`，**禁止复用旧 id**
+4. 写入后通过 `wpsnote-cli add-note-tags --note_id {note_id} --tag_names '["小红书"]' --json`（或 MCP `manage_note_tags({ note_id, add: ["小红书"] })`）添加文件级标签
 
 ### 每页内容结构
 
@@ -235,7 +236,6 @@ MCP 降级：`read_image({ note_id, block_id })`
 
 ```xml
 <h1>{源笔记标题} - 小红书图文</h1>
-<p><tag>#小红书</tag></p>
 <p>来源笔记：{标题} | 页数：{N}页 | 风格：{风格}</p>
 
 <h2>封面页（P1）</h2>
@@ -380,9 +380,9 @@ wpsnote-cli gen-image \
 
 每张图生成后按以下顺序执行：
 
-**1. 获取图片 URL**
-- `image_gen.py` 生图：从 `[saved] {路径}` 取本地路径，作为 `--src` 传入
-- `wpsnote-cli gen-image` 生图：从 JSON 输出取 `data.image_url`，直接作为 URL 传入
+**1. 获取图片路径或 URL**
+- `image_gen.py` 生图：从 `[saved] {路径}` 取本地路径，CLI 插入时使用 `--file`（MCP 需转为 `data:image/...;base64,...` 且解码后 ≤ 2 MiB）
+- `wpsnote-cli gen-image` 生图：从返回 JSON 取 `image_url`，CLI / MCP 插入时使用 `--src` / `src`
 
 **2. 刷新 outline 获取 anchor_id**
 ```bash
@@ -392,11 +392,20 @@ wpsnote-cli outline --note_id "{笔记ID}" --json
 
 **3. 插入图片（优先 CLI）**
 ```bash
+# 本地图片（≤ 2 MiB）：用 --file
 wpsnote-cli insert-image \
     --note_id "{笔记ID}" \
     --anchor_id "{占位段落的前一个block_id}" \
     --position "after" \
-    --src "{URL或本地路径}" \
+    --file "{本地路径}" \
+    --json
+
+# 或公网 URL（如 gen-image 返回的 image_url）：用 --src
+wpsnote-cli insert-image \
+    --note_id "{笔记ID}" \
+    --anchor_id "{占位段落的前一个block_id}" \
+    --position "after" \
+    --src "{image_url}" \
     --json
 ```
 
@@ -405,10 +414,8 @@ wpsnote-cli insert-image \
 
 **5. 降级：CLI 失败则用 MCP**
 ```
-insert_image({ note_id: "...", anchor_id: "...", position: "after", src: "..." })
+insert_image({ note_id: "...", anchor_id: "...", position: "after", src: "{公网URL或dataURI}" })
 ```
-
-> ⚠️ `insert-image` 要求笔记在 WPS 编辑器中打开，否则报 `INTERNAL_ERROR`。遇到此错误提示用户打开笔记后重试。
 
 每张完成后说：「第 {N} 张配图（{页面类型}）已写入」。全部完成后说：「共 {N} 页配图已全部写入笔记《{笔记标题}》。」
 
@@ -440,7 +447,7 @@ insert_image({ note_id: "...", anchor_id: "...", position: "after", src: "..." }
 
 收到后：
 1. 调用 `create_note` 创建标题 `小红书创作偏好` 的笔记
-2. 将偏好以表格写入（见下方模板）
+2. 将偏好以表格写入（见下方模板），并通过 `wpsnote-cli add-note-tags --note_id {note_id} --tag_names '["小红书"]' --json`（或 MCP `manage_note_tags({ note_id, add: ["小红书"] })`）添加文件级标签
 3. 告知「偏好已保存，下次自动加载」
 4. 继续执行 Step 2
 
@@ -448,7 +455,6 @@ insert_image({ note_id: "...", anchor_id: "...", position: "after", src: "..." }
 
 ```xml
 <h1>小红书创作偏好</h1>
-<p><tag>#小红书</tag></p>
 <table>
   <tr>
     <td><p><strong>配置项</strong></p></td>

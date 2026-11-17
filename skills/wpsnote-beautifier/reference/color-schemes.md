@@ -1,6 +1,6 @@
 # 预设配色方案
 
-agent 根据文档类型和用户偏好选择配色方案。每个方案定义了标题、加粗、高亮块、分栏的完整颜色映射。
+agent 根据文档类型和用户偏好选择配色方案。每个方案均严格选用 **WPS 笔记编辑器预设色板**（来自 `get_xml_reference`），**不可使用任意自定义 hex 色值**，否则编辑器会在写入后静默丢弃颜色属性。
 
 ---
 
@@ -10,18 +10,16 @@ agent 根据文档类型和用户偏好选择配色方案。每个方案定义�
 
 | 元素 | 属性 | 色值 |
 |------|------|------|
-| h1 标题 | fontColor | `#0D47A1` |
-| h2 标题 | fontColor | `#1565C0` |
-| h3 标题 | fontColor | `#1976D2` |
-| h4 标题 | fontColor | `#1E88E5` |
-| 重点加粗 | fontColor | `#01579B` |
-| 行内高亮 | fontHighlightColor | `#BBDEFB` |
-| 高亮块-要点 | bg / border | `#E3F2FD` / `#1976D2` |
-| 高亮块-提示 | bg / border | `#FFF8E1` / `#FFA000` |
-| 高亮块-警告 | bg / border | `#FFEBEE` / `#E53935` |
-| 分栏-正面 | columnBg | `#E3F2FD` |
-| 分栏-负面 | columnBg | `#FFF3E0` |
-| 分栏-中性 | columnBg | `#F5F5F5` |
+| h1 / h2 标题 | fontColor | `#0E52D4` |
+| h3 / h4 标题 | fontColor | `#116AF0` / `#0080A0` |
+| 重点加粗 | fontColor | `#0E52D4` |
+| 行内高亮 | fontHighlightColor | `#D9EEFB` |
+| 高亮块-要点 | bg / border | `#E6EEFA` / `#98C1FF` |
+| 高亮块-提示 | bg / border | `#FAF1E6` / `#FEC794` |
+| 高亮块-警告 | bg / border | `#FAE6E6` / `#F2A7A7` |
+| 分栏-正面 | columnBg | `#EBF2FF` |
+| 分栏-负面 | columnBg | `#FFF5EB` |
+| 分栏-中性 | columnBg | `#F2F2F2` |
 
 ---
 
@@ -31,18 +29,16 @@ agent 根据文档类型和用户偏好选择配色方案。每个方案定义�
 
 | 元素 | 属性 | 色值 |
 |------|------|------|
-| h1 标题 | fontColor | `#1B5E20` |
-| h2 标题 | fontColor | `#2E7D32` |
-| h3 标题 | fontColor | `#388E3C` |
-| h4 标题 | fontColor | `#43A047` |
-| 重点加粗 | fontColor | `#1B5E20` |
-| 行内高亮 | fontHighlightColor | `#C8E6C9` |
-| 高亮块-要点 | bg / border | `#E8F5E9` / `#4CAF50` |
-| 高亮块-提示 | bg / border | `#FFF8E1` / `#FFB300` |
-| 高亮块-警告 | bg / border | `#FCE4EC` / `#E91E63` |
-| 分栏-正面 | columnBg | `#E8F5E9` |
-| 分栏-负面 | columnBg | `#FFEBEE` |
-| 分栏-中性 | columnBg | `#F1F8E9` |
+| h1 / h2 标题 | fontColor | `#078654` |
+| h3 / h4 标题 | fontColor | `#58A401` |
+| 重点加粗 | fontColor | `#078654` |
+| 行内高亮 | fontHighlightColor | `#DFF0C4` |
+| 高亮块-要点 | bg / border | `#E6FAEB` / `#AFE3BB` |
+| 高亮块-提示 | bg / border | `#FAF1E6` / `#FEC794` |
+| 高亮块-警告 | bg / border | `#FAE6E6` / `#F2A7A7` |
+| 分栏-正面 | columnBg | `#E8FCEF` |
+| 分栏-负面 | columnBg | `#FFECEB` |
+| 分栏-中性 | columnBg | `#EEFFEB` |
 
 ---
 
@@ -52,18 +48,16 @@ agent 根据文档类型和用户偏好选择配色方案。每个方案定义�
 
 | 元素 | 属性 | 色值 |
 |------|------|------|
-| h1 标题 | fontColor | `#BF360C` |
-| h2 标题 | fontColor | `#D84315` |
-| h3 标题 | fontColor | `#E64A19` |
-| h4 标题 | fontColor | `#F4511E` |
-| 重点加粗 | fontColor | `#BF360C` |
-| 行内高亮 | fontHighlightColor | `#FFE0B2` |
-| 高亮块-要点 | bg / border | `#FFF3E0` / `#FF9800` |
-| 高亮块-提示 | bg / border | `#E3F2FD` / `#42A5F5` |
-| 高亮块-警告 | bg / border | `#FFEBEE` / `#EF5350` |
-| 分栏-正面 | columnBg | `#FFF3E0` |
-| 分栏-负面 | columnBg | `#EFEBE9` |
-| 分栏-中性 | columnBg | `#FBE9E7` |
+| h1 / h2 标题 | fontColor | `#DB7800` |
+| h3 / h4 标题 | fontColor | `#D1A300` |
+| 重点加粗 | fontColor | `#DB7800` |
+| 行内高亮 | fontHighlightColor | `#F8D7B7` |
+| 高亮块-要点 | bg / border | `#FAF1E6` / `#FEC794` |
+| 高亮块-提示 | bg / border | `#E6EEFA` / `#98C1FF` |
+| 高亮块-警告 | bg / border | `#FAE6E6` / `#F2A7A7` |
+| 分栏-正面 | columnBg | `#FFF5EB` |
+| 分栏-负面 | columnBg | `#FFECEB` |
+| 分栏-中性 | columnBg | `#FEF6E7` |
 
 ---
 
@@ -73,18 +67,15 @@ agent 根据文档类型和用户偏好选择配色方案。每个方案定义�
 
 | 元素 | 属性 | 色值 |
 |------|------|------|
-| h1 标题 | fontColor | `#4A148C` |
-| h2 标题 | fontColor | `#6A1B9A` |
-| h3 标题 | fontColor | `#7B1FA2` |
-| h4 标题 | fontColor | `#8E24AA` |
-| 重点加粗 | fontColor | `#4A148C` |
-| 行内高亮 | fontHighlightColor | `#E1BEE7` |
-| 高亮块-要点 | bg / border | `#F3E5F5` / `#9C27B0` |
-| 高亮块-提示 | bg / border | `#E8EAF6` / `#5C6BC0` |
-| 高亮块-警告 | bg / border | `#FCE4EC` / `#EC407A` |
-| 分栏-正面 | columnBg | `#F3E5F5` |
-| 分栏-负面 | columnBg | `#FCE4EC` |
-| 分栏-中性 | columnBg | `#EDE7F6` |
+| h1 / h2 / h3 / h4 标题 | fontColor | `#A639D7` |
+| 重点加粗 | fontColor | `#A639D7` |
+| 行内高亮 | fontHighlightColor | `#E6D6F0` |
+| 高亮块-要点 | bg / border | `#F5EBFA` / `#E5B5FD` |
+| 高亮块-提示 | bg / border | `#E6EEFA` / `#98C1FF` |
+| 高亮块-警告 | bg / border | `#FAE6E6` / `#F2A7A7` |
+| 分栏-正面 | columnBg | `#FAF0FF` |
+| 分栏-负面 | columnBg | `#FFECEB` |
+| 分栏-中性 | columnBg | `#F0EDFF` |
 
 ---
 
@@ -94,18 +85,16 @@ agent 根据文档类型和用户偏好选择配色方案。每个方案定义�
 
 | 元素 | 属性 | 色值 |
 |------|------|------|
-| h1 标题 | fontColor | `#212121` |
-| h2 标题 | fontColor | `#424242` |
-| h3 标题 | fontColor | `#616161` |
-| h4 标题 | fontColor | `#757575` |
-| 重点加粗 | fontColor | `#212121` |
-| 行内高亮 | fontHighlightColor | `#E0E0E0` |
-| 高亮块-要点 | bg / border | `#F5F5F5` / `#616161` |
-| 高亮块-提示 | bg / border | `#FFFDE7` / `#F9A825` |
-| 高亮块-警告 | bg / border | `#FFEBEE` / `#E53935` |
-| 分栏-正面 | columnBg | `#F5F5F5` |
-| 分栏-负面 | columnBg | `#FAFAFA` |
-| 分栏-中性 | columnBg | `#EEEEEE` |
+| h1 / h2 标题 | fontColor | `#080F17` |
+| h3 / h4 标题 | fontColor | `#757575` |
+| 重点加粗 | fontColor | `#080F17` |
+| 行内高亮 | fontHighlightColor | `#E6E6E6` |
+| 高亮块-要点 | bg / border | `#EBEBEB` / `#C5C5C5` |
+| 高亮块-提示 | bg / border | `#FAF1E6` / `#FEC794` |
+| 高亮块-警告 | bg / border | `#FAE6E6` / `#F2A7A7` |
+| 分栏-正面 | columnBg | `#F2F2F2` |
+| 分栏-负面 | columnBg | `#FFECEB` |
+| 分栏-中性 | columnBg | `#EDEEF0` |
 
 ---
 
@@ -120,4 +109,4 @@ agent 根据文档类型和用户偏好选择配色方案。每个方案定义�
 | 技术文档、代码笔记 | E 石墨灰 |
 | 用户未指定 | A 海洋蓝（默认） |
 
-如果用户提供了自定义颜色偏好，以用户指定为准，在以上方案基础上替换对应色值。
+如果用户提供了颜色偏好，必须从 WPS 预设色板（见 `wpsnote` Skill 或 `get_xml_reference`）中选择最接近的预设色值，不可写入非预设 hex 值。

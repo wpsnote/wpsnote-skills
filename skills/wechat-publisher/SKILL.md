@@ -11,7 +11,7 @@ metadata:
   version: "1.1.0"
   category: publishing
   tags: [wechat, publishing, html-export, content-formatting]
-  dependencies: [wps-note]
+  dependencies: [wpsnote]
 ---
 
 # WeChat Publisher - 公众号发布助手
@@ -81,12 +81,12 @@ metadata:
 **优先使用 CLI，降级到 MCP**：
 
 ```
-检查 wpsnote-cli 是否可用
+检查 wpsnote-cli 是否可用（wpsnote-cli auth status --json）
     ↓ 可用（推荐路径）
-wpsnote-cli current / find  → 获取笔记 ID
+wpsnote-cli find / list  → 获取笔记 ID
 wpsnote-cli read --note_id <id> --json → 获取笔记内容（XML）
     ↓ CLI 不可用（命令不存在 / 认证失败）
-[降级] MCP: get_current_note / search_notes
+[降级] MCP: search_notes / list_notes
 [降级] MCP: read_note
 ```
 
@@ -97,14 +97,14 @@ wpsnote-cli read --note_id <id> --json → 获取笔记内容（XML）
     │
     ├─ 检测 wpsnote-cli
     │       ↓ 可用
-    │   ① 无 note_id → wpsnote-cli current --json
+    │   ① 无 note_id → wpsnote-cli list --limit 20 --json（列出供确认）或 find
     │     有 note_id → 直接跳到 ③
     │       ↓ 不可用
-    │   ① 无 note_id → MCP: get_current_note()
+    │   ① 无 note_id → MCP: list_notes({ limit: 20 }) / search_notes(...)
     │
     ├─ ② 搜索确认（用户给了关键词）
-    │     CLI:  wpsnote-cli find --keyword "xxx" --json
-    │     MCP:  search_notes({ keyword: "xxx" })
+    │     CLI:  wpsnote-cli find "xxx" --json
+    │     MCP:  search_notes({ keywords: ["xxx"] })
     │
     ├─ ③ 读取笔记内容
     │     CLI:  wpsnote-cli read --note_id <id> --json
@@ -122,9 +122,6 @@ wpsnote-cli read --note_id <id> --json → 获取笔记内容（XML）
 ### 方式一：CLI 读取 + 脚本转换（推荐）
 
 ```bash
-# 获取当前笔记并导出
-python scripts/export-to-html.py --current
-
 # 通过 note_id 直接导出
 python scripts/export-to-html.py --note-id "abc123"
 
@@ -150,11 +147,11 @@ exporter.export(
 
 ### 方式二：MCP 工具方式（CLI 不可用时降级）
 
-通过 `wps-note` SKILL 的 MCP 工具读取笔记内容，再转换为 HTML：
+通过 `wpsnote` SKILL 的 MCP 工具读取笔记内容，再转换为 HTML：
 
 ```
 # 1. 搜索并获取笔记
-search_notes({ keyword: "文章标题" }) → note_id
+search_notes({ keywords: ["文章标题"] }) → note_id
 
 # 2. 读取笔记内容
 read_note({ note_id }) → xml_content
@@ -166,9 +163,9 @@ python scripts/export-to-html.py --note-id <id>
 ### 完整 MCP 工作流示例
 
 ```
-# 步骤 1：获取当前笔记（或搜索）
-get_current_note()
-→ { note_id: "abc123", title: "AI 工具介绍", word_count: 3500 }
+# 步骤 1：搜索或列出目标笔记
+list_notes({ keyword: "AI 工具介绍", limit: 20 })
+→ notes[0].note_id = "abc123"
 
 # 步骤 2：读取笔记内容（根据大小选择方式）
 get_note_outline({ note_id: "abc123" })
@@ -299,8 +296,7 @@ python scripts/export-to-html.py --note-id "abc123" --template blue-theme
 # 1. 创作内容
 python scripts/create-content.py --topic "AI 工具介绍"
 
-# 2. 写入 WPS
-python scripts/wps-write.py --input draft.md --title "AI 工具介绍"
+# 2. 通过 wpsnote 写入 WPS 笔记（MCP create_note + batch_edit，或 wpsnote-cli create / batch-edit）
 
 # 3. 排版发布（本 skill）
 python scripts/export-to-html.py --search "AI 工具介绍"
@@ -356,16 +352,17 @@ wechat-publisher/
 
 ## 常用编排模式
 
-### 模式 1：直接导出当前笔记
+### 模式 1：按最近笔记导出
 
-用户已有内容，直接排版导出：
+列出最近笔记确认后导出：
 
 ```bash
 # CLI 方式（推荐）
-python scripts/export-to-html.py --current --template blue-theme
+wpsnote-cli list --limit 20 --json
+python scripts/export-to-html.py --note-id <id> --template blue-theme
 
 # MCP 方式（降级）
-get_current_note() → note_id
+list_notes({ limit: 20 }) → note_id
 python scripts/export-to-html.py --note-id <id> --template blue-theme
 ```
 
@@ -378,7 +375,7 @@ python scripts/export-to-html.py --note-id <id> --template blue-theme
 python scripts/export-to-html.py --search "文章标题"
 
 # MCP 方式（降级）
-search_notes({ keyword: "文章标题" }) → note_id
+search_notes({ keywords: ["文章标题"] }) → note_id
 python scripts/export-to-html.py --note-id <id>
 ```
 
@@ -393,12 +390,11 @@ python scripts/export-to-html.py --note-id <id>
 
 ### 笔记读取失败 (NOTE_NOT_FOUND)
 
-**现象**：`search_notes` 或 `get_current_note` 返回笔记不存在
-**原因**：笔记 ID 错误、笔记被删除、编辑器未就绪
+**现象**：`search_notes` 或 `read_note` 返回笔记不存在（`4048001901`）
+**原因**：笔记 ID 错误或笔记已移入回收站
 **解决**：
-1. 重新搜索确认正确的 `note_id`
-2. 检查 WPS 笔记应用是否正常打开
-3. 如使用 `get_current_note`，确保笔记窗口是激活状态
+1. 用 `list_notes` 或 `search_notes` 重新确认正确的 `note_id`
+2. 检查笔记是否被移入回收站（可用 `list_trash` 查看并通过 `restore_note` 恢复）
 
 ### 内容为空或格式错乱
 
@@ -447,12 +443,12 @@ python scripts/export-to-html.py --note-id <id>
 
 ### MCP 工具调用失败
 
-**现象**：`mcp__wpsnote__read_note` 等工具报错
-**原因**：EDITOR_NOT_READY、BLOCK_NOT_FOUND、网络问题
+**现象**：`wpsnote` MCP 的 `read_note` 等工具报错
+**原因**：笔记不存在、`block_id` 过期、API Key 权限不足或网络异常
 **解决**：
-1. 检查 WPS 笔记应用是否正常运行
-2. 重新获取 `note_id` 或 `block_id`
-3. 参考 `wps-note` SKILL 的 Troubleshooting
+1. 检查云端 MCP `X-API-Key` 配置与网络连通性（或执行 `wpsnote-cli auth status`）
+2. 重新调用 `list_notes` / `get_note_outline` 获取最新 `note_id` 或 `block_id`
+3. 参考 `wpsnote` SKILL 的 Troubleshooting / `ERROR_CODES.md`
 
 ---
 

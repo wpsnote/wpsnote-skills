@@ -10,19 +10,19 @@
 ### 一级标题
 
 ```xml
-<h1><span fontColor="#0D47A1">文档主标题</span></h1>
+<h1><span fontColor="#0E52D4">文档主标题</span></h1>
 ```
 
 ### 二级标题
 
 ```xml
-<h2><span fontColor="#1565C0">章节标题</span></h2>
+<h2><span fontColor="#0E52D4">章节标题</span></h2>
 ```
 
 ### 三级标题
 
 ```xml
-<h3><span fontColor="#1976D2">子章节标题</span></h3>
+<h3><span fontColor="#116AF0">子章节标题</span></h3>
 ```
 
 ---
@@ -32,19 +32,19 @@
 ### 加粗 + 颜色
 
 ```xml
-<p>普通文字中的<strong><span fontColor="#01579B">重点关键词</span></strong>需要突出。</p>
+<p>普通文字中的<strong><span fontColor="#0E52D4">重点关键词</span></strong>需要突出。</p>
 ```
 
 ### 行内高亮
 
 ```xml
-<p>这个<span fontHighlightColor="#BBDEFB">关键概念</span>需要注意。</p>
+<p>这个<span fontHighlightColor="#D9EEFB">关键概念</span>需要注意。</p>
 ```
 
 ### 加粗 + 行内高亮（双重强调）
 
 ```xml
-<p>这是<strong><span fontHighlightColor="#BBDEFB">最核心的结论</span></strong>。</p>
+<p>这是<strong><span fontHighlightColor="#D9EEFB">最核心的结论</span></strong>。</p>
 ```
 
 ---
@@ -54,7 +54,7 @@
 ### 要点/结论型
 
 ```xml
-<highlightBlock emoji="💡" highlightBlockBackgroundColor="#E3F2FD" highlightBlockBorderColor="#1976D2">
+<highlightBlock emoji="💡" highlightBlockBackgroundColor="#E6EEFA" highlightBlockBorderColor="#98C1FF">
   <p><strong>核心要点</strong></p>
   <p>这里放需要强调的结论或关键发现。</p>
 </highlightBlock>
@@ -63,7 +63,7 @@
 ### 提示/注意型
 
 ```xml
-<highlightBlock emoji="⚠️" highlightBlockBackgroundColor="#FFF8E1" highlightBlockBorderColor="#FFA000">
+<highlightBlock emoji="⚠️" highlightBlockBackgroundColor="#FAF1E6" highlightBlockBorderColor="#FEC794">
   <p><strong>注意事项</strong></p>
   <p>这里放需要提醒读者注意的内容。</p>
 </highlightBlock>
@@ -72,7 +72,7 @@
 ### 警告/风险型
 
 ```xml
-<highlightBlock emoji="❗" highlightBlockBackgroundColor="#FFEBEE" highlightBlockBorderColor="#E53935">
+<highlightBlock emoji="❗" highlightBlockBackgroundColor="#FAE6E6" highlightBlockBorderColor="#F2A7A7">
   <p><strong>重要警告</strong></p>
   <p>这里放风险提示或错误警告。</p>
 </highlightBlock>
@@ -81,7 +81,7 @@
 ### 引用/摘要型
 
 ```xml
-<highlightBlock emoji="📖" highlightBlockBackgroundColor="#E3F2FD" highlightBlockBorderColor="#1976D2">
+<highlightBlock emoji="📖" highlightBlockBackgroundColor="#E6EEFA" highlightBlockBorderColor="#98C1FF">
   <p><em>引用的原文或文献摘要内容放在这里。</em></p>
 </highlightBlock>
 ```
@@ -89,7 +89,7 @@
 ### 定义/术语型
 
 ```xml
-<highlightBlock emoji="📝" highlightBlockBackgroundColor="#F3E5F5" highlightBlockBorderColor="#9C27B0">
+<highlightBlock emoji="📝" highlightBlockBackgroundColor="#F5EBFA" highlightBlockBorderColor="#E5B5FD">
   <p><strong>术语名称</strong></p>
   <p>术语的定义和解释。</p>
 </highlightBlock>
@@ -98,7 +98,7 @@
 ### 高亮块内包含列表
 
 ```xml
-<highlightBlock emoji="✅" highlightBlockBackgroundColor="#E3F2FD" highlightBlockBorderColor="#1976D2">
+<highlightBlock emoji="✅" highlightBlockBackgroundColor="#E6EEFA" highlightBlockBorderColor="#98C1FF">
   <p><strong>关键步骤</strong></p>
   <p listType="ordered" listLevel="0" listId="hl1">第一步操作</p>
   <p listType="ordered" listLevel="0" listId="hl1">第二步操作</p>
@@ -114,14 +114,14 @@
 
 ```xml
 <columns>
-  <column columnBackgroundColor="#E3F2FD">
-    <p><strong><span fontColor="#1565C0">✅ 优势</span></strong></p>
+  <column columnBackgroundColor="#EBF2FF">
+    <p><strong><span fontColor="#0E52D4">✅ 优势</span></strong></p>
     <p>优势点一</p>
     <p>优势点二</p>
     <p>优势点三</p>
   </column>
-  <column columnBackgroundColor="#FFF3E0">
-    <p><strong><span fontColor="#E65100">❌ 劣势</span></strong></p>
+  <column columnBackgroundColor="#FFF5EB">
+    <p><strong><span fontColor="#DB7800">❌ 劣势</span></strong></p>
     <p>劣势点一</p>
     <p>劣势点二</p>
     <p>劣势点三</p>
@@ -133,13 +133,13 @@
 
 ```xml
 <columns>
-  <column columnBackgroundColor="#E3F2FD">
-    <p><strong><span fontColor="#1565C0">方案 A</span></strong></p>
+  <column columnBackgroundColor="#EBF2FF">
+    <p><strong><span fontColor="#0E52D4">方案 A</span></strong></p>
     <p>方案 A 的核心要点</p>
     <p>方案 A 的特色</p>
   </column>
-  <column columnBackgroundColor="#F3E5F5">
-    <p><strong><span fontColor="#6A1B9A">方案 B</span></strong></p>
+  <column columnBackgroundColor="#FAF0FF">
+    <p><strong><span fontColor="#A639D7">方案 B</span></strong></p>
     <p>方案 B 的核心要点</p>
     <p>方案 B 的特色</p>
   </column>
@@ -150,16 +150,16 @@
 
 ```xml
 <columns>
-  <column columnBackgroundColor="#E3F2FD">
-    <p><strong><span fontColor="#1565C0">概念 A</span></strong></p>
+  <column columnBackgroundColor="#EBF2FF">
+    <p><strong><span fontColor="#0E52D4">概念 A</span></strong></p>
     <p>说明文字</p>
   </column>
-  <column columnBackgroundColor="#E8F5E9">
-    <p><strong><span fontColor="#2E7D32">概念 B</span></strong></p>
+  <column columnBackgroundColor="#E8FCEF">
+    <p><strong><span fontColor="#078654">概念 B</span></strong></p>
     <p>说明文字</p>
   </column>
-  <column columnBackgroundColor="#FFF3E0">
-    <p><strong><span fontColor="#E65100">概念 C</span></strong></p>
+  <column columnBackgroundColor="#FFF5EB">
+    <p><strong><span fontColor="#DB7800">概念 C</span></strong></p>
     <p>说明文字</p>
   </column>
 </columns>
@@ -169,14 +169,14 @@
 
 ```xml
 <columns>
-  <column columnBackgroundColor="#F5F5F5">
+  <column columnBackgroundColor="#F2F2F2">
     <p><strong>📊 关键指标</strong></p>
-    <p><span fontColor="#1565C0" fontSize="20">85%</span></p>
+    <p><span fontColor="#0E52D4" fontSize="20">85%</span></p>
     <p>用户满意度</p>
   </column>
-  <column columnBackgroundColor="#F5F5F5">
+  <column columnBackgroundColor="#F2F2F2">
     <p><strong>📈 增长趋势</strong></p>
-    <p><span fontColor="#2E7D32" fontSize="20">+23%</span></p>
+    <p><span fontColor="#078654" fontSize="20">+23%</span></p>
     <p>同比增长率</p>
   </column>
 </columns>
@@ -189,9 +189,9 @@
 ### 带颜色的有序列表
 
 ```xml
-<p listType="ordered" listLevel="0" listId="lst1"><strong><span fontColor="#1565C0">第一步</span></strong> — 具体操作说明</p>
-<p listType="ordered" listLevel="0" listId="lst1"><strong><span fontColor="#1565C0">第二步</span></strong> — 具体操作说明</p>
-<p listType="ordered" listLevel="0" listId="lst1"><strong><span fontColor="#1565C0">第三步</span></strong> — 具体操作说明</p>
+<p listType="ordered" listLevel="0" listId="lst1"><strong><span fontColor="#0E52D4">第一步</span></strong> — 具体操作说明</p>
+<p listType="ordered" listLevel="0" listId="lst1"><strong><span fontColor="#0E52D4">第二步</span></strong> — 具体操作说明</p>
+<p listType="ordered" listLevel="0" listId="lst1"><strong><span fontColor="#0E52D4">第三步</span></strong> — 具体操作说明</p>
 ```
 
 ### 嵌套无序列表
@@ -220,8 +220,8 @@
 ### 章节开头摘要 + 正文
 
 ```xml
-<h2><span fontColor="#1565C0">章节标题</span></h2>
-<highlightBlock emoji="📌" highlightBlockBackgroundColor="#E3F2FD" highlightBlockBorderColor="#1976D2">
+<h2><span fontColor="#0E52D4">章节标题</span></h2>
+<highlightBlock emoji="📌" highlightBlockBackgroundColor="#E6EEFA" highlightBlockBorderColor="#98C1FF">
   <p>本章节核心：一句话概括本节要讲什么。</p>
 </highlightBlock>
 <p>正文段落开始……</p>
@@ -230,19 +230,19 @@
 ### 对比分析段落
 
 ```xml
-<h3><span fontColor="#1976D2">方案对比分析</span></h3>
+<h3><span fontColor="#116AF0">方案对比分析</span></h3>
 <p>以下从多个维度对比两种方案：</p>
 <columns>
-  <column columnBackgroundColor="#E3F2FD">
-    <p><strong><span fontColor="#1565C0">方案 A</span></strong></p>
+  <column columnBackgroundColor="#EBF2FF">
+    <p><strong><span fontColor="#0E52D4">方案 A</span></strong></p>
     <p>方案描述</p>
   </column>
-  <column columnBackgroundColor="#FFF3E0">
-    <p><strong><span fontColor="#E65100">方案 B</span></strong></p>
+  <column columnBackgroundColor="#FFF5EB">
+    <p><strong><span fontColor="#DB7800">方案 B</span></strong></p>
     <p>方案描述</p>
   </column>
 </columns>
-<highlightBlock emoji="💡" highlightBlockBackgroundColor="#E8F5E9" highlightBlockBorderColor="#4CAF50">
+<highlightBlock emoji="💡" highlightBlockBackgroundColor="#E6FAEB" highlightBlockBorderColor="#AFE3BB">
   <p><strong>推荐结论</strong></p>
   <p>综合考虑，推荐方案 X，因为……</p>
 </highlightBlock>
@@ -251,14 +251,14 @@
 ### 步骤流程段落
 
 ```xml
-<h3><span fontColor="#1976D2">操作步骤</span></h3>
-<highlightBlock emoji="⚠️" highlightBlockBackgroundColor="#FFF8E1" highlightBlockBorderColor="#FFA000">
+<h3><span fontColor="#116AF0">操作步骤</span></h3>
+<highlightBlock emoji="⚠️" highlightBlockBackgroundColor="#FAF1E6" highlightBlockBorderColor="#FEC794">
   <p>开始前请确保已完成前置准备。</p>
 </highlightBlock>
-<p listType="ordered" listLevel="0" listId="steps"><strong><span fontColor="#1565C0">准备阶段</span></strong> — 说明</p>
-<p listType="ordered" listLevel="0" listId="steps"><strong><span fontColor="#1565C0">执行阶段</span></strong> — 说明</p>
-<p listType="ordered" listLevel="0" listId="steps"><strong><span fontColor="#1565C0">验证阶段</span></strong> — 说明</p>
-<highlightBlock emoji="✅" highlightBlockBackgroundColor="#E8F5E9" highlightBlockBorderColor="#4CAF50">
+<p listType="ordered" listLevel="0" listId="steps"><strong><span fontColor="#0E52D4">准备阶段</span></strong> — 说明</p>
+<p listType="ordered" listLevel="0" listId="steps"><strong><span fontColor="#0E52D4">执行阶段</span></strong> — 说明</p>
+<p listType="ordered" listLevel="0" listId="steps"><strong><span fontColor="#0E52D4">验证阶段</span></strong> — 说明</p>
+<highlightBlock emoji="✅" highlightBlockBackgroundColor="#E6FAEB" highlightBlockBorderColor="#AFE3BB">
   <p><strong>完成标志</strong></p>
   <p>当看到 XXX 时表示操作成功。</p>
 </highlightBlock>
@@ -277,18 +277,18 @@
     {
       "op": "replace",
       "block_id": "aaa",
-      "content": "<h2><span fontColor=\"#1565C0\">新标题</span></h2>"
+      "content": "<h2><span fontColor=\"#0E52D4\">新标题</span></h2>"
     },
     {
       "op": "insert",
       "anchor_id": "bbb",
       "position": "after",
-      "content": "<highlightBlock emoji=\"💡\" highlightBlockBackgroundColor=\"#E3F2FD\" highlightBlockBorderColor=\"#1976D2\"><p><strong>核心要点</strong></p><p>要点内容。</p></highlightBlock>"
+      "content": "<highlightBlock emoji=\"💡\" highlightBlockBackgroundColor=\"#E6EEFA\" highlightBlockBorderColor=\"#98C1FF\"><p><strong>核心要点</strong></p><p>要点内容。</p></highlightBlock>"
     },
     {
       "op": "replace",
       "block_id": "ccc",
-      "content": "<p>普通文字中的<strong><span fontColor=\"#01579B\">重点</span></strong>被突出。</p>"
+      "content": "<p>普通文字中的<strong><span fontColor=\"#0E52D4\">重点</span></strong>被突出。</p>"
     }
   ]
 }

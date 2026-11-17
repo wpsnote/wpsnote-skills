@@ -2,7 +2,7 @@
 name: web-importer
 description: >
   将网页内容高质量导入到 WPS 笔记，保留原文颜色、粗体、标题格式，图片按原文位置插入。
-  支持微信公众号文章、X/Twitter 推文/Thread 和任意通用网页，统一入口自动识别，使用 web_fetch、web_search、batch_web_search、create_note、batch_edit、insert_image、sync_note 直接写入 WPS 笔记。
+  支持微信公众号文章、X/Twitter 推文/Thread 和任意通用网页，统一入口自动识别，使用 web_fetch、web_search、batch_web_search、create_note、batch_edit、insert_image 直接写入 WPS 笔记。
   当用户说「把这个网页存到笔记」「导入这篇文章」「抓取这个页面到笔记」
   「把公众号文章存到 WPS 笔记」「把这条推文存到笔记」「收藏这个链接」「网页转笔记」时触发。
   不适用于：新闻智能解读（用 news-to-note）、本地文档批量导入（用 doc-importer）。
@@ -17,6 +17,8 @@ metadata:
 
 将网页或微信公众号文章直接导入 WPS 笔记，**保留原文的颜色、粗体、标题推断、blockquote 高亮块**，图片按位置插入。
 **现已支持 X/Twitter 推文和 Thread**：统一通过 `web_fetch` 获取当前可见内容，抓到图片链接时按原文位置插入笔记。
+
+> WPS 笔记接口与 XML 规范见 [wpsnote](../wpsnote/SKILL.md)；脚本 CLI 调用复用 [comm_script/wps_cli.py](../../comm_script/wps_cli.py)。
 
 ---
 
@@ -49,18 +51,18 @@ insert_image（逐张插图）
 # 用户直接给 URL
 web_fetch "https://mp.weixin.qq.com/s/xxxxx"
 create_note
+get_note_outline
 batch_edit
 insert_image
-sync_note
 
 # 用户只给标题或模糊描述
 web_search "文章标题或关键词"
 ask_user（候选链接不唯一时）
 web_fetch "确认后的 URL"
 create_note
+get_note_outline
 batch_edit
 insert_image
-sync_note
 ```
 
 ---
@@ -120,7 +122,7 @@ web_fetch 获取当前可见正文
 | `*斜体*` / 斜体语义 | `<em>` |
 | 一级到三级标题 | `<h1>` / `<h2>` / `<h3>` |
 | 引用块 | `<blockquote>` |
-| 无序 / 有序列表 | `<ul>` / `<li>` |
+| 无序 / 有序列表 | `<p listType="bullet\|ordered" listLevel="0">` |
 | 表格 | `<table>` |
 | 链接 | 在段落中保留文本和 URL |
 
@@ -193,14 +195,10 @@ web_fetch 获取当前可见正文
 
 ## 依赖项
 
-| 工具 | 用途 |
+| 工具 / 模块 | 用途 |
 |------|------|
 | `web_fetch` | 抓取网页正文 |
 | `web_search` / `batch_web_search` | 在缺少精确链接时定位网页 |
-| `create_note` | 创建导入目标笔记 |
-| `get_note_outline` | 获取 block_id 和最新结构 |
-| `batch_edit` / `edit_block` | 写入正文和少量修补 |
-| `insert_image` | 按位置插入图片 |
-| `read_note` / `read_section` / `read_blocks` | 回读验收 |
-| `sync_note` | 导入后同步 |
 | `ask_user` | 链接不明确时确认候选 |
+| 核心 skill `wpsnote` | 笔记创建、大纲定位、正文写入、插图与回读验收 |
+| [comm_script/wps_cli.py](../../comm_script/wps_cli.py) | 供导出脚本复用的云端 CLI 公共封装 |

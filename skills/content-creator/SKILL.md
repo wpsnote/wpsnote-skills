@@ -10,7 +10,7 @@ metadata:
   version: "1.0.0"
   category: content-creation
   tags: [content, writing, copywriting, wechat, xiaohongshu, zhihu]
-  dependencies: [wps-note]
+  dependencies: [wpsnote]
 ---
 
 # Content Creator - 专业内容创作工作流
@@ -25,7 +25,7 @@ metadata:
 |------|----------|
 | 已有内容需要排版发布 | 这是发布阶段，不是创作阶段 |
 | 简单文本编辑、格式调整 | 直接用 MCP 工具 |
-| 翻译、摘要、改写已有内容 | 直接用 Claude 内置能力 |
+| 翻译、摘要、改写已有内容 | 直接用 AI 助手内置能力 |
 | 查找已有笔记内容 | 用笔记搜索工具 |
 
 **一句话判断**：如果用户说的是"帮我写...""我想写..."，用本 Skill；如果用户说的是"排版...""发布...""导出..."，说明内容已完成，不需要创作。
@@ -187,7 +187,7 @@ metadata:
 ```
 
 **关键工具**：
-- `wps-read.py` 读取样张文章
+- 使用 [wpsnote](../wpsnote/SKILL.md)（`search_notes` / `read_note`）读取样张文章
 - `extract-template.py` 提取风格模板
 
 ### 模式 2：全新主题创作
@@ -239,12 +239,12 @@ metadata:
 
 ### MCP 工具调用失败
 
-**现象**：`mcp__wpsnote__search_notes` 等工具报错
-**原因**：EDITOR_NOT_READY、BLOCK_NOT_FOUND、网络问题
+**现象**：`wpsnote` MCP 的 `search_notes` / `batch_edit` 等工具报错
+**原因**：`block_id` 过期或不存在（如 `4048002108`）、API Key 认证失败或网络异常
 **解决**：
-1. 检查 WPS 笔记应用是否正常运行
-2. 重新获取 block_id（编辑后 ID 会变化）
-3. 参考 `wps-note` SKILL 的 Troubleshooting
+1. 检查云端 MCP 配置与 `X-API-Key`（或执行 `wpsnote-cli auth status`）
+2. 重新调用 `get_note_outline` 或 `read_blocks` 获取最新 `block_id`（编辑后 ID 会变化）
+3. 参考 `wpsnote` SKILL 的 Troubleshooting / `ERROR_CODES.md`
 
 ### 创作偏离风格
 
@@ -259,16 +259,11 @@ metadata:
 
 ## 与 WPS 笔记的集成
 
-创作完成后，可直接写入 WPS 笔记：
+创作完成后，直接通过 [wpsnote](../wpsnote/SKILL.md)（云端 MCP 或 `wpsnote-cli`）写入 WPS 笔记：
 
-```bash
-# 写入 WPS 笔记
-python scripts/wps-write.py --input final.md --title "文章标题" --tags "公众号"
 ```
-
-**通过 MCP 工具写入**：
-```
-create_note({ title: "文章标题" }) → note_id
+create_note({ title: "文章标题" }) → { note_id }
+get_note_outline({ note_id }) → 获取首个正文 block_id
 batch_edit({ note_id, operations: [
   { op: "replace", block_id, content: "<h1>标题</h1>..." }
 ]})
@@ -279,7 +274,6 @@ batch_edit({ note_id, operations: [
 ## Resources（资源引用）
 
 - 写作范式参考：`references/writing-paradigm.md`
-- WPS 集成脚本：`scripts/wps-read.py`、`scripts/wps-write.py`
 - 样式提取脚本：`scripts/extract-template.py`
 
 ---

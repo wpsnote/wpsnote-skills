@@ -23,21 +23,12 @@ metadata:
 
 ## 快速开始
 
-**当前技能的笔记写入统一走笔记 Agent 工具；如需理解批量扫描和转换逻辑，可先读取本 Skill 自带脚本：**
+> WPS 笔记接口见 [wpsnote](../wpsnote/SKILL.md)；CLI 调用与大文档分页/重试已统一在 [comm_script/wps_cli.py](../../comm_script/wps_cli.py)。
 
 ```text
 参考实现：
 - read_file("scripts/scan_docs.py")        # 目录扫描与来源识别
-- read_file("scripts/import_to_wps.py")    # 转换与导入主流程
-
-实际写入：
-- create_note
-- get_note_outline
-- batch_edit
-- insert_image
-- read_note / read_blocks
-- search_notes
-- sync_note
+- read_file("scripts/import_to_wps.py")    # 文档转换与导入主流程（复用 comm_script/wps_cli.py）
 ```
 
 ---
@@ -68,106 +59,13 @@ metadata:
 
 ---
 
-## WPS API 关键限制（必读）
+## 批量导入稳定性约定（已内置于脚本）
 
-在实际导入前，必须了解以下 WPS 笔记 API 的重要限制，否则会导致内容丢失或图片插入失败。
+通用 API 规则见核心 skill [wpsnote](../wpsnote/SKILL.md)；针对大文档批量导入，脚本已内置以下保障：
 
-### 1. `get_note_outline` 默认只返回 100 个 block
-
-`get_note_outline` 默认按分页视图返回 block，`blocks` 数组可能只覆盖前一部分内容，但 `block_count` 会返回真实总数。
-
-**影响**：大文章（> 100 个 block）如果只靠首屏大纲查占位符，只能找到前一部分 block，后半段图片会丢失。
-
-**解决方案**：先用 `get_note_outline` 拿首批 block，再用 `read_blocks` 续读：
-
-```python
-def get_all_blocks(note_id):
-    """翻页获取笔记全部 blocks"""
-    # 第一页用 get_note_outline（有 preview 字段）
-    r = get_note_outline(note_id=note_id)
-    data = r.get('data', {})
-    total = data.get('block_count', 0)
-    blocks = list(data.get('blocks', []))
-    last_id = blocks[-1]['id'] if blocks else None
-
-    # 超过首批范围时用 read_blocks 续读
-    while len(blocks) < total and last_id:
-        r2 = read_blocks(note_id=note_id, block_id=last_id, after=100)
-        new_blocks = (r2.get('data') or {}).get('blocks', [])
-        if not new_blocks:
-            break
-        blocks.extend(new_blocks)
-        last_id = new_blocks[-1]['id']
-
-    return blocks
-```
-
-> `get_note_outline` 返回的 block 常带 `preview` 字段；`read_blocks` 更适合拿完整 XML 内容。
-
----
-
-### 2. `insert_image` 在旧版 WPS 中只能插到前台笔记
-
-**旧版本（< 0.1.4）**：`insert_image` 的图片 `fileID` 绑定到当前 WPS 客户端 UI 中打开的笔记，即使传了 `note_id` 参数，图片也会错误地关联到前台笔记。
-
-**新版本（>= 0.1.4）**：已修复，`insert_image` 可以直接后台插图到任意笔记，无需切换前台。
-
-**处理策略**：
-- 先按后台插图能力执行；如果图片插错位置，再回退为“切到目标笔记后插图”
-- 如果宿主或客户端仍表现为旧版行为，明确提示用户升级或手动切到目标笔记
-- 插图后务必回读验收，不要假设成功
-
----
-
-### 3. `list_notes` 返回大数据时要主动收敛范围
-
-`list_notes` 一次返回的数据过大时，不适合拿来做全文去重或全量扫描判断。
-
-**解决方案**：
-- 去重优先用 `search_notes` 按标题关键词搜索
-- 浏览列表时主动分页或缩小筛选范围
-- 不把一次大范围 `list_notes` 当成唯一真相来源
-
----
-
-### 4. anchor 失效导致内容静默丢失
-
-连续调用 `batch_edit` 插入内容时，WPS 内部可能重新索引，导致前一次操作返回的 `anchor_id` 失效。如果不处理，后续内容会静默跳过，造成文章后半段内容丢失。
-
-**必须实现重试逻辑**：
-
-```python
-def do_insert(note_id, content, get_anchor_fn, max_retries=4):
-    """带重试的内容插入，自动刷新 anchor"""
-    anchor = get_anchor_fn()
-    for attempt in range(max_retries):
-        if attempt > 0:
-            time.sleep(1.5 * attempt)
-            anchor = get_anchor_fn()  # 重新获取最新 anchor
-        res = batch_edit(note_id, [{
-            'op': 'insert', 'anchor_id': anchor,
-            'position': 'after', 'content': content
-        }])
-        if res.get('ok') is not False:
-            anchor = get_anchor_fn()
-            return True
-    return False  # 4次都失败才放弃
-```
-
-**获取最新 anchor（最后一个 block）**：
-
-```python
-def get_last_block_id(note_id):
-    r = get_note_outline(note_id=note_id)
-    blocks = (r.get('data') or {}).get('blocks', [])
-    return blocks[-1]['id'] if blocks else None
-```
-
----
-
-### 5. 批量写入的稳定参数
-
-大量内容写入时，`BATCH_SIZE`（每次 `batch_edit` 的 block 数）建议设为 **4**，过大会增加 anchor 失效概率。
+1. **分页读取全部 block**：`get_note_outline` 默认只返回首批 100 个 block，超出时通过 `read_blocks` 续读（见 `comm_script/wps_cli.py` `cli_get_all_blocks`），避免大文章后半段图片占位符遗漏。
+2. **去重收敛范围**：按标题关键词用 `list_notes(keyword=...)` / `search_notes` 检索，不做无过滤全量扫描。
+3. **anchor 失效重试与分批大小**：`BATCH_SIZE = 4`（不要超过 8），`batch_edit` 连续写入出现 anchor 失效时自动刷新末尾 `block_id` 并最多重试 4 次。
 
 ```python
 BATCH_SIZE = 4  # 不要超过 8，否则容易出现 anchor 失效
@@ -248,13 +146,14 @@ BATCH_SIZE = 4  # 不要超过 8，否则容易出现 anchor 失效
 
 导入前通过标题检查 WPS 笔记中是否已存在同名笔记。
 
-**注意**：不要把 `list_notes` 当成去重主入口，改用 `search_notes` 按标题关键词搜索：
+**注意**：不要把无过滤 `list_notes` 当成去重主入口，改用 `list_notes(keyword=...)` 按标题关键词精准搜索（或用 `search_notes(keywords=[...])`）：
 
 ```python
 def check_exists(title):
-    r = search_notes(keyword=title[:20], limit=5)
-    notes = (r.get('data') or {}).get('notes', [])
-    return next((n for n in notes if n['title'] == title), None)
+    r = list_notes(keyword=title[:40], limit=20)
+    data = r.get('data') or r
+    notes = data.get('notes') or data.get('items') or []
+    return next((n for n in notes if n.get('title') == title), None)
 ```
 
 **发现重复时询问用户：**
@@ -352,10 +251,13 @@ get_note_outline(note_id=note_id)
 batch_edit(note_id=note_id, operations=[
     {"op": "replace", "block_id": first_block_id, "content": "<h1>标题</h1>"},
     {"op": "insert", "anchor_id": first_block_id, "position": "after",
-     "content": "<p>2025-04-21 18:30 | <tag>#推文</tag></p>"},
+     "content": "<p>2025-04-21 18:30</p>"},
 ])
 
-# 4. 插入图片（新版 WPS 支持后台插图）
+# 4. 添加文件级标签（单斜杠分层，不带 #）
+manage_note_tags(note_id=note_id, add=["导入/推文"])
+
+# 5. 插入图片（支持后台直接插图）
 insert_image(note_id=note_id, anchor_id=placeholder_block_id,
              position="before", src="data:image/jpeg;base64,...")
 ```
@@ -400,7 +302,7 @@ insert_image(note_id=note_id, anchor_id=placeholder_block_id,
 ### Obsidian Vault
 
 1. **Wiki 链接**：`[[文件名]]` → 纯文本；`[[文件名|显示名]]` → `显示名`
-2. **标签**：`#标签名` → `<tag>#标签名</tag>`
+2. **标签**：提取 `#标签名` 后通过 `manage_note_tags({ note_id, add: ["标签名"] })`（CLI 用 `add-note-tags`）写入文件级标签
 3. **Callouts**：`> [!NOTE]` → WPS `<highlightBlock>`
 4. **Frontmatter**：YAML 头部提取为 meta 信息
 5. **图片路径**：先找同目录 → 再找 `attachments/` → 再找 Vault 根目录
@@ -419,11 +321,7 @@ insert_image(note_id=note_id, anchor_id=placeholder_block_id,
 
 ### `get_note_outline` 只返回 100 个 block，后面内容丢失
 
-使用翻页方案，见"WPS API 关键限制"第 1 条。
-
-### 图片插入后点击显示加载失败
-
-旧版 WPS（< 0.1.4）`insert_image` 的 fileID 绑定到前台笔记，升级到最新版本可解决。
+使用翻页方案，见"批量导入稳定性约定"第 1 条。
 
 ### `insert_image` 报 `IMAGE_FETCH_FAILED`
 
@@ -432,11 +330,11 @@ insert_image(note_id=note_id, anchor_id=placeholder_block_id,
 
 ### anchor 失效导致内容截断
 
-实现 4 次重试逻辑，每次失败后重新获取 `last_block_id`，见"WPS API 关键限制"第 4 条。
+实现 4 次重试逻辑，每次失败后重新获取 `last_block_id`，见"批量导入稳定性约定"第 3 条。
 
 ### `list_notes` / `search_notes` 返回结果过多
 
-缩小筛选范围或主动分页，见"WPS API 关键限制"第 3 条。
+缩小筛选范围或主动分页，见"批量导入稳定性约定"第 2 条。
 
 ### pandoc 未安装
 ```bash
@@ -460,7 +358,7 @@ brew install tesseract
 
 | 工具 | 用途 | 安装 |
 |------|------|------|
-| 笔记 Agent 工具（`create_note` / `get_note_outline` / `batch_edit` / `insert_image` / `read_note` / `read_blocks` / `search_notes` / `sync_note`） | WPS 笔记写入、去重与回读（必须） | 宿主提供 |
+| 笔记 Agent 工具（`create_note` / `get_note_outline` / `batch_edit` / `insert_image` / `read_note` / `read_blocks` / `search_notes` / `list_notes`） | WPS 笔记写入、去重与回读（必须） | 宿主提供 |
 | `beautifulsoup4` | HTML 解析（公众号/网页） | `pip3 install beautifulsoup4` |
 | `lxml` | HTML 解析加速 | `pip3 install lxml` |
 | `pandoc` | DOCX → Markdown | `brew install pandoc` |

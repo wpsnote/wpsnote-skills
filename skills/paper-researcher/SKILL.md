@@ -7,14 +7,14 @@ description: 学术论文全流程助手：搜索论文、下载 PDF、存入 WP
 
 ## 前置检查
 
-启动本 Skill 的第一步，检查 `wpsnote-cli` 是否可用：
+启动本 Skill 的第一步，检查云端 `wpsnote-cli` 鉴权是否可用：
 
 ```bash
-wpsnote-cli status --json
+wpsnote-cli auth status --json
 ```
 
 - **可用** → 后续 WPS 笔记操作全部使用 `wpsnote-cli` 命令
-- **不可用** → 降级使用 MCP 工具（`user-wpsnote` 服务）操作 WPS 笔记
+- **不可用** → 引导安装/登录（`npm install -g wpsnote-cli` + `wpsnote-cli auth login`），或降级使用云端 MCP 工具（`wpsnote`）操作 WPS 笔记
 
 ---
 
@@ -22,18 +22,20 @@ wpsnote-cli status --json
 
 ```bash
 wpsnote-cli <子命令> [参数]
-# 复杂参数一律通过 --json-args 传入
-wpsnote-cli <子命令> --json-args '{"key": "value"}'
+# 复杂参数（含 XML/数组）通过 --args 或 --args-file 传入
+wpsnote-cli <子命令> --args '{"key": "value"}'
 ```
 
 | 操作 | CLI 命令 |
 |------|---------|
-| 搜索笔记 | `wpsnote-cli search-notes --query "关键词" --json` |
+| 搜索笔记 | `wpsnote-cli find "关键词" --json`（或 `--keywords '["关键词"]'`） |
 | 列出笔记 | `wpsnote-cli list --json` |
 | 读取笔记全文 | `wpsnote-cli read --note_id <id> --json` |
-| 新建笔记 | `wpsnote-cli create --json-args '{"title":"标题","content":"<h1>...</h1>"}'` |
-| 插入 block | `wpsnote-cli edit --json-args '{"note_id":"...","op":"insert","anchor_id":"...","content":"<p>...</p>"}'` |
-| 获取标签列表 | `wpsnote-cli tags --json` |
+| 获取大纲 | `wpsnote-cli outline --note_id <id> --json` |
+| 新建空白笔记 | `wpsnote-cli create --title "标题" --json` |
+| 插入/替换 block | `wpsnote-cli edit --args '{"note_id":"...","op":"insert","anchor_id":"...","position":"after","content":"<p>...</p>"}'` |
+| 获取/搜索标签 | `wpsnote-cli tags --json` / `wpsnote-cli find-tags --json` |
+| 为笔记打标 | `wpsnote-cli manage-tags --note_id <id> --args '{"add":["论文/NLP"]}' --json` |
 
 ---
 
@@ -124,33 +126,33 @@ python3 /path/to/scripts/paper.py get 1706.03762 --output ~/papers --markdown
 
 ```bash
 # 1. 先查是否已有同名笔记
-wpsnote-cli search-notes --query "论文标题" --json
+wpsnote-cli list --keyword "论文标题" --json
 
-# 2a. 无同名笔记 → 新建
-wpsnote-cli create --json-args '{
-  "title": "论文标题",
-  "content": "<h1>论文标题</h1><p><tag>#论文/NLP</tag></p>"
-}'
+# 2a. 无同名笔记 → 新建空白笔记 → 取初始 block_id → 写入并打标
+wpsnote-cli create --title "论文标题" --json
+wpsnote-cli outline --note_id "<id>" --json
+wpsnote-cli edit --args '{"note_id":"<id>","op":"replace","block_id":"<first_block_id>","content":"<h1>论文标题</h1><p>摘要...</p>"}'
+wpsnote-cli manage-tags --note_id "<id>" --args '{"add":["论文/NLP"]}' --json
 
 # 2b. 有同名笔记 → 追加内容到末尾
-wpsnote-cli edit --json-args '{
+wpsnote-cli edit --args '{
   "note_id": "<id>",
   "op": "insert",
   "anchor_id": "<last_block_id>",
+  "position": "after",
   "content": "<p>追加内容</p>"
 }'
 ```
 
 ### 使用 MCP（wpsnote-cli 不可用时）
 
-调用 `user-wpsnote` MCP 服务的 `search_notes`、`create_note`、`edit_block` 等工具完成相同操作。
+调用云端 MCP（`wpsnote`）的 `list_notes`、`search_notes`、`create_note`、`get_note_outline`、`edit_block`、`manage_note_tags` 等工具完成相同操作。
 
-### 笔记内容模板
+### 笔记内容与标签约定
 
-笔记 XML 结构模板见 [references/note-template.md](references/note-template.md)。
-
-- **单篇**：标签 `#论文/[领域]`，如 `#论文/NLP`、`#论文/CV`
-- **综述**：标签 `#论文/综述` + `#论文/[领域]`
+- XML 结构遵循核心 skill [wpsnote](../wpsnote/SKILL.md)（写前不确定格式可查 `get_xml_reference`）。
+- **单篇**：文件级标签 `论文/[领域]`（如 `论文/NLP`、`论文/CV`，`manage-tags` 参数不带 `#`）
+- **综述**：`论文/综述` + `论文/[领域]`
 
 ---
 
@@ -174,4 +176,4 @@ arXiv 分类过滤参考：`cs.AI` `cs.LG` `cs.CV` `cs.CL` `cs.NE` `stat.ML`
 | PDF 下载失败 | 脚本自动重试 3 次；仍失败则直接访问 `https://arxiv.org/pdf/<ID>` 手动下载 |
 | Markdown 转换为空 | PDF 可能是扫描件；确认 `pip install pymupdf` 已安装后重试 |
 | OpenAlex 无结果 | 改用 arxiv；或换更通用的英文关键词 |
-| wpsnote-cli 不可用 | 降级使用 MCP `user-wpsnote` 服务 |
+| wpsnote-cli 不可用 | 降级使用 MCP `wpsnote` 服务 |
