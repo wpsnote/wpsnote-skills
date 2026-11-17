@@ -22,7 +22,7 @@ import_to_wps.py - 使用 wpsnote-cli 将转换好的文档批量导入到 WPS �
 
 前置要求：
     wpsnote-cli 已安装并配置好 API Key
-    （运行 wpsnote-cli status 确认连接正常）
+    （运行 wpsnote-cli auth status --json 确认鉴权正常）
 
 核心稳定性说明：
     1. cli() 使用 bytes 模式读取输出，避免大数据截断（text=True 下 list 等接口会截断）
@@ -52,108 +52,25 @@ INSERT_RETRIES = 4    # anchor 失效时最大重试次数
 IMG_INTERVAL = 0.8    # 图片插入间隔（秒），避免速率限制
 
 
-# ─── CLI 基础封装 ───────────────────────────────────────────────────────────────
+# ─── CLI 公共适配器（comm_script/wps_cli.py）───────────────────────────────────
 
-def cli(args: list) -> dict:
-    """
-    执行 wpsnote-cli 命令，返回 JSON 结果。
-    使用 bytes 模式读取输出（避免 text=True 在大数据下截断）。
-    """
-    cmd = ['wpsnote-cli'] + args + ['--json']
-    result = subprocess.run(cmd, capture_output=True, timeout=60)
-    raw = result.stdout.decode('utf-8', errors='ignore').strip()
-    if not raw:
-        return {'ok': False, 'message': result.stderr.decode('utf-8', errors='ignore').strip() or 'empty'}
-    try:
-        return json.loads(raw)
-    except Exception:
-        return {'ok': False, 'message': raw[:200]}
+_COMM_SCRIPT_DIR = Path(__file__).resolve().parents[3] / "comm_script"
+if str(_COMM_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_COMM_SCRIPT_DIR))
 
-
-def cli_retry(args: list, retries: int = 3, sleep: float = 2.0) -> dict:
-    """带重试的 CLI 调用（遇到 Block not found 直接放弃）"""
-    res = {}
-    for i in range(retries):
-        res = cli(args)
-        if res.get('ok') is not False:
-            return res
-        msg = res.get('message', '')
-        if 'Block not found' in msg or 'not found' in msg.lower():
-            break
-        if i < retries - 1:
-            time.sleep(sleep)
-    return res
-
-
-def cli_check() -> bool:
-    """检查 wpsnote-cli 是否可用且已连接"""
-    try:
-        result = subprocess.run(['wpsnote-cli', 'status'], capture_output=True, timeout=10)
-        return result.returncode == 0
-    except FileNotFoundError:
-        return False
-
-
-def cli_find_note_by_title(title: str) -> str | None:
-    """按标题搜索笔记，返回 note_id 或 None（用 find 而非 list，避免大数据截断）"""
-    r = cli(['find', '--keyword', title[:20], '--limit', '5'])
-    notes = (r.get('data') or {}).get('notes', [])
-    return next((n['note_id'] for n in notes if n.get('title') == title), None)
-
-
-def cli_create_note(title: str) -> str | None:
-    """创建笔记，返回 note_id"""
-    r = cli(['create', '--title', title])
-    return (r.get('data') or {}).get('fileId') or (r.get('data') or {}).get('note_id')
-
-
-def cli_sync(note_id: str):
-    """同步笔记（新建后需要等待初始化）"""
-    cli(['sync', '--note_id', note_id])
-    time.sleep(2.0)
-
-
-def cli_get_outline(note_id: str) -> dict:
-    """获取笔记大纲（第一页，最多 100 个 block）"""
-    r = cli(['outline', '--note_id', note_id])
-    return r.get('data') or {}
-
-
-def cli_get_all_blocks(note_id: str) -> list:
-    """
-    翻页获取笔记全部 blocks，解决 outline 默认只返回 100 条的限制。
-    第一页用 outline（有 preview 字段），后续翻页用 read-blocks（有 content 字段）。
-    """
-    data = cli_get_outline(note_id)
-    total = data.get('block_count', 0)
-    blocks = list(data.get('blocks', []))
-    last_id = blocks[-1]['id'] if blocks else None
-    fetched = len(blocks)
-
-    while fetched < total and last_id:
-        r2 = cli(['read-blocks', '--note_id', note_id,
-                  '--block_id', last_id, '--after', '100',
-                  '--include_anchor', 'false'])
-        new_blocks = (r2.get('data') or {}).get('blocks', [])
-        if not new_blocks:
-            break
-        blocks.extend(new_blocks)
-        last_id = new_blocks[-1]['id']
-        fetched += len(new_blocks)
-
-    return blocks
-
-
-def cli_get_last_block_id(note_id: str) -> str:
-    """获取笔记最后一个 block 的 ID（用作插入 anchor）"""
-    data = cli_get_outline(note_id)
-    blocks = data.get('blocks', [])
-    return blocks[-1]['id'] if blocks else ''
-
-
-def cli_batch_edit(note_id: str, ops: list) -> dict:
-    return cli_retry(['batch-edit', '--note_id', note_id,
-                      '--operations', json.dumps(ops)])
+from wps_cli import (  # noqa: E402
+    cli,
+    cli_batch_edit,
+    cli_check,
+    cli_create_note,
+    cli_find_note_by_title,
+    cli_get_all_blocks,
+    cli_get_last_block_id,
+    cli_get_outline,
+    cli_retry,
+    cli_sync,
+    unwrap_cli_result as _unwrap_cli_result,
+)
 
 
 # ─── HTML → WPS XML（从 import_with_images.py 移植）──────────────────────────
@@ -395,24 +312,14 @@ def html_to_segments(html_path: Path, img_dir: Path) -> list:
 def insert_image_b64(note_id: str, anchor_id: str, img_path: Path,
                      position: str = 'after') -> str | None:
     """
-    将图片 base64 编码后写入临时文件，用 --src_file 插入。
+    通过云端 wpsnote-cli 的 --file 参数读取本地图片并插入笔记（自动转为 data URI）。
     返回新 block_id 或 None。
-    使用固定临时文件路径避免频繁创建/删除文件。
     """
-    ext = img_path.suffix.lstrip('.').lower()
-    mime = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
-            'png': 'image/png', 'gif': 'image/gif',
-            'webp': 'image/webp'}.get(ext, 'image/jpeg')
-    b64 = base64.b64encode(img_path.read_bytes()).decode()
-    tmp = Path('/tmp/wps_img.txt')
-    tmp.write_text(f'data:{mime};base64,{b64}')
-
     res = cli_retry(['insert-image',
                      '--note_id', note_id,
                      '--anchor_id', anchor_id,
                      '--position', position,
-                     '--src_file', str(tmp)])
-    tmp.unlink(missing_ok=True)
+                     '--file', str(img_path)])
 
     if res.get('ok') is False:
         print(f'    ✗ 插图失败: {res.get("message", "")[:80]}')
@@ -665,10 +572,10 @@ def import_one(
     first_id = blocks[0]['id']
 
     # ── 写入标题 + meta 行 ─────────────────────────────────
+    wechat_tag = None
     if source == 'wechat_mp' and publish_time:
-        tag_xml = (f'<tag id="{tag_id}">{meta.get("tag", "#导入")}</tag>'
-                   if tag_id else f'<tag>{meta.get("tag", "#导入")}</tag>')
-        meta_line = f'<p>{publish_time} | {tag_xml}</p>'
+        wechat_tag = str(meta.get('tag') or '导入').lstrip('#')
+        meta_line = f'<p>{publish_time}</p>'
     else:
         today = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
         source_label = {'obsidian': 'Obsidian', 'siyuan': '思源笔记',
@@ -701,26 +608,22 @@ def import_one(
         if verbose:
             print(f'  ✓ 图片插入完成: {images_ok}/{len(img_list)}')
 
-    # ── 打标签 ─────────────────────────────────────────────
+    # ── 打标签（通过云端 add-note-tags 文件级接口，单斜杠分层，不带 #）──
+    tags_to_add = []
+    if wechat_tag:
+        tags_to_add.append(wechat_tag)
     if auto_tag and source not in ('wechat_mp',):
         today_str = datetime.date.today().isoformat()
         source_label = {'obsidian': 'Obsidian', 'siyuan': '思源',
                         'generic': '文档'}.get(source, '文档')
-        last_id = cli_get_last_block_id(note_id)
-        if last_id:
-            cli_batch_edit(note_id, [{
-                'op': 'insert', 'anchor_id': last_id, 'position': 'after',
-                'content': f'<p><tag>#导入//{source_label}//{today_str}</tag></p>',
-            }])
-
+        tags_to_add.append(f'导入/{source_label}/{today_str}')
     for tag in (extra_tags or []):
-        last_id = cli_get_last_block_id(note_id)
-        if last_id:
-            wps_tag = ('#' + tag.lstrip('#')).replace('/', '//')
-            cli_batch_edit(note_id, [{
-                'op': 'insert', 'anchor_id': last_id, 'position': 'after',
-                'content': f'<p><tag>{wps_tag}</tag></p>',
-            }])
+        clean_tag = str(tag).strip().lstrip('#')
+        if clean_tag:
+            tags_to_add.append(clean_tag)
+    if tags_to_add:
+        cli(['add-note-tags', '--note_id', note_id,
+             '--tag_names', json.dumps(tags_to_add, ensure_ascii=False)])
 
     return {
         'success': True,
@@ -936,7 +839,7 @@ def full_pipeline(
         for name, err in fail_list:
             print(f'  - {name}：{err}')
     if auto_tag and not dry_run:
-        print(f'\n  WPS 笔记中搜索标签 #导入//{source_label}//{today} 可查看所有导入笔记。')
+        print(f'\n  WPS 笔记中搜索标签 导入/{source_label}/{today} 可查看所有导入笔记。')
 
 
 # ─── CLI 入口 ───────────────────────────────────────────────────────────────────
@@ -958,7 +861,7 @@ def main():
     args = parser.parse_args()
 
     if not cli_check():
-        print('❌ wpsnote-cli 未连接，请运行：wpsnote-cli status')
+        print('❌ wpsnote-cli 未鉴权或未连接，请运行：wpsnote-cli auth status --json（或 wpsnote-cli auth login）')
         sys.exit(1)
 
     input_path = Path(args.input).resolve()

@@ -536,7 +536,7 @@ def scrape_url_to_wps(url, title, content_html, metadata, images_dir, output_dir
         print("   [WPS] 找不到 wps_writer.py，请确认脚本在同一目录下")
         return False
     if not mod.cli_check():
-        print("   [WPS] wpsnote-cli 未连接，请运行：wpsnote-cli status")
+        print("   [WPS] wpsnote-cli 未连接，请运行：wpsnote-cli auth status --json（或 wpsnote-cli auth login）")
         return False
 
     # 将 content_html 写到临时文件供 html_to_segments 读取

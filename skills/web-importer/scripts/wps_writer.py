@@ -15,110 +15,35 @@ wps_writer.py — web-importer 专用 WPS 写入核心
 
 import os
 import re
+import sys
 import json
 import base64
-import subprocess
 import time
 from pathlib import Path
 from bs4 import BeautifulSoup, NavigableString
 
+_COMM_SCRIPT_DIR = Path(__file__).resolve().parents[3] / "comm_script"
+if str(_COMM_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_COMM_SCRIPT_DIR))
+
+from wps_cli import (  # noqa: E402
+    cli,
+    cli_batch_edit,
+    cli_check,
+    cli_create_note,
+    cli_get_all_blocks,
+    cli_get_last_block_id,
+    cli_get_outline,
+    cli_retry,
+    cli_sync,
+    unwrap_cli_result as _unwrap_cli_result,
+)
 
 # ─── 常量 ──────────────────────────────────────────────────────────────────────
 
 BATCH_SIZE     = 4
 INSERT_RETRIES = 4
 IMG_INTERVAL   = 0.8
-
-
-# ─── CLI 基础封装 ───────────────────────────────────────────────────────────────
-
-def cli(args: list) -> dict:
-    """执行 wpsnote-cli 命令，返回 JSON 结果（bytes 模式读取，避免大数据截断）"""
-    cmd = ['wpsnote-cli'] + args + ['--json']
-    result = subprocess.run(cmd, capture_output=True, timeout=60)
-    raw = result.stdout.decode('utf-8', errors='ignore').strip()
-    if not raw:
-        return {'ok': False, 'message': result.stderr.decode('utf-8', errors='ignore').strip() or 'empty'}
-    try:
-        return json.loads(raw)
-    except Exception:
-        return {'ok': False, 'message': raw[:200]}
-
-
-def cli_retry(args: list, retries: int = 3, sleep: float = 2.0) -> dict:
-    """带重试的 CLI 调用"""
-    res = {}
-    for i in range(retries):
-        res = cli(args)
-        if res.get('ok') is not False:
-            return res
-        msg = res.get('message', '')
-        if 'Block not found' in msg or 'not found' in msg.lower():
-            break
-        if i < retries - 1:
-            time.sleep(sleep)
-    return res
-
-
-def cli_check() -> bool:
-    """检查 wpsnote-cli 是否可用且已连接"""
-    try:
-        result = subprocess.run(['wpsnote-cli', 'status'], capture_output=True, timeout=10)
-        return result.returncode == 0
-    except FileNotFoundError:
-        return False
-
-
-def cli_create_note(title: str) -> str | None:
-    """创建笔记，返回 note_id"""
-    r = cli(['create', '--title', title])
-    return (r.get('data') or {}).get('fileId') or (r.get('data') or {}).get('note_id')
-
-
-def cli_sync(note_id: str):
-    """同步笔记（新建后等待初始化）"""
-    cli(['sync', '--note_id', note_id])
-    time.sleep(2.0)
-
-
-def cli_get_outline(note_id: str) -> dict:
-    """获取笔记大纲（第一页，最多 100 个 block）"""
-    r = cli(['outline', '--note_id', note_id])
-    return r.get('data') or {}
-
-
-def cli_get_all_blocks(note_id: str) -> list:
-    """翻页获取笔记全部 blocks"""
-    data = cli_get_outline(note_id)
-    total = data.get('block_count', 0)
-    blocks = list(data.get('blocks', []))
-    last_id = blocks[-1]['id'] if blocks else None
-    fetched = len(blocks)
-
-    while fetched < total and last_id:
-        r2 = cli(['read-blocks', '--note_id', note_id,
-                  '--block_id', last_id, '--after', '100',
-                  '--include_anchor', 'false'])
-        new_blocks = (r2.get('data') or {}).get('blocks', [])
-        if not new_blocks:
-            break
-        blocks.extend(new_blocks)
-        last_id = new_blocks[-1]['id']
-        fetched += len(new_blocks)
-
-    return blocks
-
-
-def cli_get_last_block_id(note_id: str) -> str:
-    """获取笔记最后一个 block 的 ID"""
-    data = cli_get_outline(note_id)
-    blocks = data.get('blocks', [])
-    return blocks[-1]['id'] if blocks else ''
-
-
-def cli_batch_edit(note_id: str, ops: list) -> dict:
-    return cli_retry(['batch-edit', '--note_id', note_id,
-                      '--operations', json.dumps(ops)])
 
 
 # ─── HTML → WPS XML（内联样式解析）──────────────────────────────────────────────
@@ -351,21 +276,12 @@ def html_to_segments(html_path: Path, img_dir: Path) -> list:
 
 def insert_image_b64(note_id: str, anchor_id: str, img_path: Path,
                      position: str = 'after') -> str | None:
-    """将图片 base64 编码后写入临时文件，用 --src_file 插入，返回新 block_id 或 None"""
-    ext = img_path.suffix.lstrip('.').lower()
-    mime = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
-            'png': 'image/png', 'gif': 'image/gif',
-            'webp': 'image/webp'}.get(ext, 'image/jpeg')
-    b64 = base64.b64encode(img_path.read_bytes()).decode()
-    tmp = Path('/tmp/wps_img.txt')
-    tmp.write_text(f'data:{mime};base64,{b64}')
-
+    """通过云端 wpsnote-cli 的 --file 参数读取本地图片并插入笔记，返回新 block_id 或 None"""
     res = cli_retry(['insert-image',
                      '--note_id', note_id,
                      '--anchor_id', anchor_id,
                      '--position', position,
-                     '--src_file', str(tmp)])
-    tmp.unlink(missing_ok=True)
+                     '--file', str(img_path)])
 
     if res.get('ok') is False:
         print(f'    ✗ 插图失败: {res.get("message", "")[:80]}')

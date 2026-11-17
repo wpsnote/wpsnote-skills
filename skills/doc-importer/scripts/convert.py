@@ -207,10 +207,9 @@ def markdown_to_wps_xml(
             ph = register_image(src)
             return f'<p>{ph}</p>'
         text = re.sub(r'!\[.*?\]\((.+?)\)', handle_img, text)
-        # Obsidian 标签 #tag
+        # Obsidian 标签 #tag（保留纯文本；文件级标签在导入阶段通过 add-note-tags 写入）
         def handle_tag(m):
-            tag = m.group(1).replace('/', '//')
-            return f'<tag>#{tag}</tag>'
+            return f'#{escape_xml(m.group(1))}'
         text = re.sub(r'(?<!\w)#([\w/\u4e00-\u9fa5]+)', handle_tag, text)
         return text
 

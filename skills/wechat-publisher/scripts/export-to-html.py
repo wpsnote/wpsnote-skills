@@ -11,36 +11,34 @@ import re
 import html as html_module
 import base64
 import json
-import shutil
-import subprocess
+import sys
 import yaml
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
 
+_COMM_SCRIPT_DIR = Path(__file__).resolve().parents[3] / "comm_script"
+if str(_COMM_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_COMM_SCRIPT_DIR))
+
+import wps_cli  # noqa: E402
+
 
 def _cli_available() -> bool:
     """检查 wpsnote-cli 是否可用"""
-    return shutil.which("wpsnote-cli") is not None
+    return wps_cli.cli_available()
 
 
 def _cli_run(args: list) -> Optional[dict]:
     """
-    运行 wpsnote-cli 命令并返回 JSON 解析结果。
+    运行 wpsnote-cli 命令并返回解包后的业务 JSON。
     失败时返回 None。
     """
-    try:
-        result = subprocess.run(
-            ["wpsnote-cli"] + args + ["--json"],
-            capture_output=True, text=True, timeout=30
-        )
-        if result.returncode != 0:
-            print(f"   ⚠️  CLI 返回错误: {result.stderr.strip()}")
-            return None
-        return json.loads(result.stdout)
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
-        print(f"   ⚠️  CLI 调用失败: {e}")
+    res = wps_cli.cli(args, timeout=30)
+    if not res.get("ok"):
+        print(f"   ⚠️  CLI 调用失败: {res.get('message', '')}")
         return None
+    return res.get("data") or None
 
 
 def cli_read_note(note_id: str) -> Optional[dict]:
@@ -58,9 +56,9 @@ def cli_find_note(keyword: str) -> Optional[str]:
     """
     通过 wpsnote-cli 搜索笔记，返回第一个匹配的 note_id 或 None。
     """
-    data = _cli_run(["find", "--keyword", keyword, "--limit", "1"])
+    data = _cli_run(["find", "--keywords", json.dumps([keyword], ensure_ascii=False), "--limit", "1"])
     if data:
-        notes = data.get("notes") or data.get("results") or []
+        notes = data.get("items") or data.get("notes") or data.get("results") or []
         if notes:
             return notes[0].get("note_id") or notes[0].get("id")
     return None
@@ -68,11 +66,8 @@ def cli_find_note(keyword: str) -> Optional[str]:
 
 def cli_current_note() -> Optional[str]:
     """
-    通过 wpsnote-cli 获取当前编辑中的笔记 ID。
+    获取当前编辑中笔记 ID（云端 CLI 无桌面编辑器上下文，恒返回 None）。
     """
-    data = _cli_run(["current"])
-    if data:
-        return data.get("note_id") or data.get("id")
     return None
 
 
@@ -1684,19 +1679,11 @@ def main():
             print(f"❌ 导出失败: {e}")
             return 1
 
-    # 方式 2：获取当前编辑中的笔记
+    # 方式 2：获取当前编辑中的笔记（仅旧桌面端支持，云端需传 --note-id / --search）
     note_id = args.note_id
     if args.current:
-        if _cli_available():
-            note_id = cli_current_note()
-            if note_id:
-                print(f"   → 当前笔记: {note_id}")
-            else:
-                print("❌ CLI 未找到当前编辑中的笔记")
-                return 1
-        else:
-            print("❌ --current 需要 wpsnote-cli，当前不可用。请手动指定 --note-id")
-            return 1
+        print("❌ 云端 wpsnote-cli 不支持 --current（无桌面编辑器上下文），请改用 --note-id 或 --search")
+        return 1
 
     # 方式 3：关键词搜索
     if args.search and not note_id:
