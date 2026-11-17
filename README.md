@@ -6,220 +6,192 @@
 
 笔记，是思想落地的地方。
 
-本仓库以 `wps-note` 为基础能力底座，让 Claude Code、Cursor、OpenClaw 等主流 AI Agent 直接驱动 WPS 笔记——往里写、从里读、让它有序、让它被找到。
+本仓库以 `wpsnote` 为基础能力，让灵犀、WorkBuddy、豆包办公、千问办公、Grok Bot 等主流 AI Agent 通过**云端 MCP** 或**云端 CLI** 直接读写、搜索、整理和管理 WPS 笔记——不依赖桌面端运行。
 
-笔记不再是你自己整理的地方，而是 Agent 替你打理的记忆层。
+---
 
-# 关于本仓库
+## 快速接入：云端 MCP 与云端 CLI
 
-本仓库包含 WPS 笔记场景下的完整 Skill 生态，覆盖笔记处理、内容创作、搜索阅读、信息捕获、灵感引擎、学习、长篇创作等场景。每个 Skill 独立在自己的文件夹中，包含一个 `SKILL.md` 定义文件。浏览这些 Skill 可以获取灵感，或了解不同的设计模式与实现方法。
+云端 MCP 与云端 CLI 对接同一个云端服务端，工具能力完全一致，按客户端形态任选其一即可：
 
-# Skill 分类
+### 方式一：配置云端 MCP（推荐用于办公 AI / 桌面 Agent）
 
-- [./skills](./skills): 全部 Skill，按功能分组如下
-- [./comm_script](./comm_script): 公共脚本（跨 Skill 复用）
+适用于灵犀、WorkBuddy、豆包办公、千问办公、Grok Bot、Cherry Studio 等支持 Streamable HTTP MCP 的客户端：
 
-### 核心能力
+1. 前往 [https://ainote.kdocs.cn/mcp-svc/keys/page](https://ainote.kdocs.cn/mcp-svc/keys/page) 登录 WPS 账号并生成 API Key（按需勾选 `read` / `write` / `destructive` 权限）。
+2. 在客户端 MCP 配置文件中加入 `wpsnote`：
+
+```json
+{
+  "mcpServers": {
+    "wpsnote": {
+      "url": "https://ainote.kdocs.cn/mcp-svc/mcp",
+      "headers": {
+        "X-API-Key": "<your-api-key>"
+      }
+    }
+  }
+}
+```
+
+### 方式二：安装云端 CLI（推荐用于终端型 Agent / 脚本自动化）
+
+适用于终端型 Agent、自动化 Bot 及批量导入导出脚本（需 Node.js ≥ 20.12）：
+
+```bash
+# 1. 全局安装云端 CLI
+npm install -g wpsnote-cli
+
+# 2. 登录授权（浏览器 OAuth，无浏览器环境可加 --no-browser）
+wpsnote-cli auth login
+
+# 或直接从 MCP JSON 导入 / 通过环境变量鉴权
+wpsnote-cli auth import <mcp.json>
+# export WPS_NOTE_API_KEY="<your-api-key>"
+
+# 3. 验证连接、权限与到期时间
+wpsnote-cli auth status --json
+
+# 4. 常用命令测试
+wpsnote-cli list --limit 10
+wpsnote-cli read --help
+```
+
+> 若此前安装过旧桌面端附带的 `~/.wpsnote-cli`，按安装提示在桌面端「AI 实验室 → 命令行工具 → 卸载」清理后再使用云端 `wpsnote-cli`。  
+> 在脚本或管道中解析 `--json` 输出时，建议固定追加 `--no-update-notice` 参数避免升级提示混入标准输出。详细文档见 [CLI_REFERENCE.md](./skills/wpsnote/references/CLI_REFERENCE.md) 与 [API_REFERENCE.md](./skills/wpsnote/references/API_REFERENCE.md)。
+
+### 方式三：安装 Skills 插件（支持插件市场的客户端）
+
+在支持插件市场的 AI 客户端中注册本仓库并按需安装 Skill 组：
+
+```text
+/plugin marketplace add wpsnote/wpsnote-skills
+```
+
+建议优先安装 `core-skills`（包含基础 skill `wpsnote`），再按需安装各场景组：
+
+```text
+/plugin install core-skills@wpsnote-skills
+/plugin install note-ops-skills@wpsnote-skills
+/plugin install content-skills@wpsnote-skills
+/plugin install capture-skills@wpsnote-skills
+/plugin install learning-skills@wpsnote-skills
+```
+
+---
+
+## Skill 分类（共 13 个）
+
+- [./skills](./skills)：全部 Skill（每个文件夹内含独立 `SKILL.md`）
+- [./comm_script](./comm_script)：跨 Skill 复用的公共脚本（[wps_cli.py](./comm_script/wps_cli.py)、[image_gen.py](./comm_script/image_gen.py)）
+
+### 核心能力（`core-skills`）
 
 | Skill | 说明 |
 |-------|------|
-| [wps-note](./skills/wps-note) | 基础能力层，通过 MCP / CLI 读取、编辑、搜索和管理 WPS 笔记，是所有场景 Skill 的依赖基础 |
-| [wpsnote-beautifier](./skills/wpsnote-beautifier) | 智能美化笔记，优化标题层级、用高亮块强调结论、用分栏展示对比内容，全文统一一种配色 |
-| [note-copilot](./skills/note-copilot) | 笔记协作打磨，识别并处理 `***` 和 `///` 援助标记，发现逻辑错误时以着色提醒 |
-| [tag-organize](./skills/tag-organize) | 清理混乱标签、重构标签体系、优化分类结构（MCP 版） |
-| [tag-organize-cli](./skills/tag-organize-cli) | 与 tag-organize 功能相同，通过 CLI 驱动 |
-| [skill-creator](./skills/skill-creator) | Skill 创建、迭代与评估工具 |
+| [wpsnote](./skills/wpsnote) | 通过云端 MCP（`wpsnote`）和云端 CLI（`wpsnote-cli`）读取、编辑、搜索和管理 WPS 笔记 |
 
-### 内容创作
+### 笔记整理与辅助（`note-ops-skills`）
+
+| Skill | 说明 |
+|-------|------|
+| [wpsnote-beautifier](./skills/wpsnote-beautifier) | 智能美化笔记，优化标题层级、高亮块与分栏排版，严格使用 WPS 预设色板 |
+| [tag-organize](./skills/tag-organize) | 清理混乱标签、重构多级标签体系、优化分类结构 |
+
+### 内容创作（`content-skills`）
 
 | Skill | 说明 |
 |-------|------|
 | [content-creator](./skills/content-creator) | 完整创作工作流：风格画像 → 需求确认 → 大纲 → 深度研究 → 文章 → 定稿 |
-| [wechat-publisher](./skills/wechat-publisher) | 将笔记排版导出为微信公众号 HTML，支持多种模板风格 |
-| [short-video-copywriter](./skills/short-video-copywriter) | 将原稿改写为短视频口播文案，支持分镜脚本与 AI 配图 |
-| [xiaohongshu-note-creator](./skills/xiaohongshu-note-creator) | 将笔记 / 文章转化为小红书图文方案，含每页文案、AI 配图和话题标签 |
-| [image-gen](./skills/image-gen) | AI 图像生成（文生图 + 图生图），对接 OpenRouter / 百炼 / 火山方舟 / Gemini |
+| [wechat-publisher](./skills/wechat-publisher) | 将 WPS 笔记排版导出为微信公众号 HTML，支持多种模板风格 |
+| [xiaohongshu-note-creator](./skills/xiaohongshu-note-creator) | 将笔记 / 文章转化为小红书图文方案，含每页文案、配图和话题标签 |
 
-### 搜索与阅读
+### 搜索与阅读（`content-skills`）
 
 | Skill | 说明 |
 |-------|------|
-| [content-digest](./skills/content-digest) | 万能内容提炼：URL / 图片 / PDF / 粘贴文本 → 结构化知识笔记，支持多篇合并与图片视觉解读 |
-| [news-to-note](./skills/news-to-note) | 新闻智能解读，搜索笔记库找关联内容，产出个性化 insight，也支持批量新闻简报 |
-| [wps-note-intelligent-search](./skills/wps-note-intelligent-search) | 深度搜索，跨笔记关联挖掘与知识图谱构建 |
-| [literature-reader](./skills/literature-reader) | 学术文献阅读与结构化概要，支持元信息提取、方法论梳理、多篇横向对比 |
-| [paper-researcher](./skills/paper-researcher) | 论文全流程：搜索（arXiv / OpenAlex）→ 下载 PDF → 精读分析 → 存入笔记 |
+| [content-digest](./skills/content-digest) | 万能内容提炼：URL / 图片 / PDF / 粘贴文本 → 结构化知识笔记，支持图片视觉解读 |
+| [news-to-note](./skills/news-to-note) | 新闻智能解读，结合已有笔记库输出个性化 insight，支持新闻简报 |
+| [paper-researcher](./skills/paper-researcher) | 学术论文全流程：arXiv / OpenAlex 搜索 → 下载 PDF → 精读分析 → 存入笔记 |
 
-### 信息捕获
+### 信息捕获（`capture-skills`）
 
 | Skill | 说明 |
 |-------|------|
-| [live-transcript-summary](./skills/live-transcript-summary) | 实时音频转写监听与自动总结，适用于会议、听课、播客、采访 |
-| [doc-importer](./skills/doc-importer) | 批量导入本地文档（Obsidian / 思源 / PDF / Word 等）到 WPS 笔记 |
-| [web-importer](./skills/web-importer) | 网页无损导入：公众号 / 推文 / 通用网页 → WPS 笔记，保留格式与图片 |
-| [coding-assistant](./skills/coding-assistant) | 多平台编码助手，自动将核心技术梳理为标准化技术文档 |
-| [note-calendar](./skills/note-calendar) | WPS 笔记与 macOS 系统日历双向联动 |
+| [doc-importer](./skills/doc-importer) | 批量导入本地文档（Obsidian / 思源 / PDF / Word / HTML 等）到 WPS 笔记 |
+| [web-importer](./skills/web-importer) | 网页无损导入：公众号 / X(Twitter) / 通用网页 → WPS 笔记，保留样式与按位插图 |
 
-### 灵感引擎
-
-串联记忆检索、想法连接和洞见生成的完整流水线，按层拆分、可独立调用也可组合。
+### 学习场景（`learning-skills`）
 
 | Skill | 说明 |
 |-------|------|
-| [ie-engine](./skills/ie-engine) | 统一入口，运行完整灵感生成流水线 |
-| [ie-retrieve-memory](./skills/ie-retrieve-memory) | 记忆层：从历史笔记中检索相关知识 |
-| [ie-connect-dots](./skills/ie-connect-dots) | 推理层：语义聚类、发现隐含关联与主题模式 |
-| [ie-generate-insight](./skills/ie-generate-insight) | 洞见层：将分析结果转化为可阅读的启发性内容 |
-| [ie-recall-memory](./skills/ie-recall-memory) | 选择性召回：当前最该想起哪些旧笔记 |
-
-### 学习场景
-
-覆盖从课堂记录到复习巩固的完整学习工作流。
-
-| Skill | 说明 |
-|-------|------|
-| [class-note-builder](./skills/class-note-builder) | 把课堂逐字稿、OCR 笔记、零散材料整理成结构化主笔记 |
-| [lecture-focus-extractor](./skills/lecture-focus-extractor) | 从长篇笔记 / 转写中提取最值得复习的重点 |
-| [misconception-finder](./skills/misconception-finder) | 检查笔记中的理解错误、概念混淆或逻辑跳步 |
-| [note-review-coach](./skills/note-review-coach) | 基于已有笔记生成不提前泄题的自测题，作答后按原文证据批改并给出错因反馈与复习建议 |
-| [notes-to-flashcards](./skills/notes-to-flashcards) | 将笔记转为可主动回忆的复习卡片 |
-| [notes-to-lesson-plan](./skills/notes-to-lesson-plan) | 将笔记整理为可讲给别人听的 teach-back 提纲 |
-| [prerequisite-gap-finder](./skills/prerequisite-gap-finder) | 找出学习卡点与缺失的前置知识 |
-| [study-note-linker](./skills/study-note-linker) | 将新笔记与旧笔记关联，构建知识网络 |
-
-### 长篇创作
-
-| Skill | 说明 |
-|-------|------|
-| [novel-writer](./skills/novel-writer) | AI 陪伴式长篇小说创作，有记忆、懂上下文、不穿帮（MCP 版） |
-| [novel-writer-cli](./skills/novel-writer-cli) | 与 novel-writer 功能相同，通过 CLI 驱动 |
-
-# 在 Claude Code、Cursor 和 MCP 中使用
-
-## Claude Code
-
-在 Claude Code 中注册本仓库为插件市场：
-
-```
-/plugin marketplace add wpsnote/wpsnote-skills
-```
-
-然后安装需要的 Skill 组：
-
-1. 选择 `Browse and install plugins`
-2. 选择 `wpsnote-skills`
-3. 选择 `base-skills`、`content-skills`、`capture-skills`、`creative-skills` 或 `learning-skills`
-4. 点击 `Install now`
-
-或直接安装：
-
-```
-/plugin install base-skills@wpsnote-skills
-/plugin install content-skills@wpsnote-skills
-/plugin install capture-skills@wpsnote-skills
-/plugin install creative-skills@wpsnote-skills
-/plugin install learning-skills@wpsnote-skills
-```
-
-## CLI（推荐）
-
-适合 Claude Code / Cursor / OpenClaw 等终端型 Agent。`wpsnote-cli <command>` 即可操作笔记，20+ 命令覆盖全部能力。
-
-```bash
-# 安装：在 WPS 笔记桌面端 MCP 设置页点击安装 CLI
-wpsnote-cli status          # 检查连接
-wpsnote-cli list            # 列出笔记
-wpsnote-cli read --help     # 查看某命令用法
-```
-
-详细命令参考：[CLI_REFERENCE.md](./skills/wps-note/references/CLI_REFERENCE.md)
-
-## MCP Server
-
-适合 Cherry Studio 等图形化 Agent，或需要工具调用协议的场景。图形化配置，开箱即用，20+ 工具与 CLI 命令一一对应。
+| [study-assistant](./skills/study-assistant) | 课堂逐字稿整理为主笔记、重点提炼与闪卡、误区与前置补缺、费曼提纲及旧知关联 |
+| [note-review-coach](./skills/note-review-coach) | 基于已有笔记生成不提前泄题的自测题，作答后按原文证据批改并输出复习建议 |
 
 ---
 
-两种方式底层能力完全一致，Agent 是操作者，笔记是落点。
+## 命令速查
 
-# 创建 Skill
+**核心操作模式**：先定位（`outline` / `find` / `search`）→ 再读取（`read` / `section` / `read-blocks`）→ 最后编辑（`edit` / `batch-edit`）
 
-使用 下面的的模板快速开始：
-
-```markdown
----
-name: my-skill-name
-description: 一句话描述这个 Skill 做什么，以及何时触发它
----
-
-# Skill 名称
-
-[在此编写 Agent 执行时遵循的指令]
-
-## 示例
-- 使用场景 1
-- 使用场景 2
-
-## 规则
-- 规则 1
-- 规则 2
-```
-
-frontmatter 必需字段：
-
-- `name` — Skill 唯一标识（小写，用连字符分隔）
-- `description` — 完整描述 Skill 功能与触发时机（这是 Agent 判断何时使用的**唯一依据**，务必写清触发边界）
-
-创建新 Skill 的完整指南，请参考 [skill-creator](./skills/skill-creator/SKILL.md) 与 [claude-skills-complete-guide.md](./claude-skills-complete-guide.md)。
-
-# 命令速查
-
-**核心操作模式**：先定位（`outline` / `search`）→ 再读取（`read`）→ 最后编辑（`edit`）
-
-所有内容以语义 XML 格式交换，所有定位基于 block_id（10 位字母数字）。
+正文以语义 XML 格式交换，块定位基于顶层 `block_id`（10 位字母数字）；文件级标签与回收站使用专用命令/工具管理。
 
 | 分类 | CLI 命令 | MCP 工具 | 说明 |
 |------|----------|----------|------|
-| 读取 | `wpsnote-cli outline` | `get_note_outline` | 获取结构大纲与 block_id，超大文档自动分页 |
+| 读取 | `wpsnote-cli outline` | `get_note_outline` | 获取结构大纲与 `block_id`，支持分页 |
 | 读取 | `wpsnote-cli read` | `read_note` | 读取笔记全文 XML |
 | 读取 | `wpsnote-cli section` | `read_section` | 按标题读取章节，支持 `block_offset` 续读 |
 | 读取 | `wpsnote-cli read-blocks` | `read_blocks` | 按 ID 批量读取 block |
 | 读取 | `wpsnote-cli search` | `search_note_content` | 笔记内搜索，编辑前精确定位 |
-| 读取 | `wpsnote-cli xml-ref` | `get_xml_reference` | 获取 XML 标签与写入示例 |
+| 读取 | `wpsnote-cli read-image` | `read_image` | 读取已持久化图片内容（base64） |
+| 读取 | `wpsnote-cli audio` | `get_audio_transcript` | 获取语音录音转写内容 |
+| 读取 | `wpsnote-cli xml-ref` | `get_xml_reference` | 获取 XML 标签、预设色板与写入示例 |
 | 写入 | `wpsnote-cli edit` | `edit_block` | 单个编辑操作 |
-| 写入 | `wpsnote-cli batch-edit` | `batch_edit` | 多个操作原子事务 |
-| 写入 | `wpsnote-cli insert-image` | `insert_image` | 插入图片 |
+| 写入 | `wpsnote-cli batch-edit` | `batch_edit` | 多个操作原子事务（`delete → replace → update_attrs → insert`） |
+| 写入 | `wpsnote-cli insert-image` | `insert_image` | 插入图片（CLI 支持 `--file` 传本地图片） |
 | 写入 | `wpsnote-cli gen-image` | `generate_image` | AI 文生图 |
-| 管理 | `wpsnote-cli find` | `search_notes` | 搜索笔记 |
-| 管理 | `wpsnote-cli list` | `list_notes` | 列出笔记 |
-| 管理 | `wpsnote-cli create` | `create_note` | 创建空白笔记 |
-| 管理 | `wpsnote-cli info` | `get_note_info` | 获取笔记元数据 |
-| 管理 | `wpsnote-cli tags` | `find_tags` | 列出全部标签或按关键词搜索标签 |
-| 管理 | `wpsnote-cli find --json-args '{"tags":["标签名"]}'` | `search_notes({ tags: ["标签名"] })` | 查看某个标签下的笔记 |
-| 管理 | `wpsnote-cli manage-tags` | `manage_note_tags` | 管理笔记文件级标签（添加/移除/查询） |
-| 管理 | `wpsnote-cli import-web` | `import_web_page` | 导入支持域名的网页内容 |
-| 管理 | `wpsnote-cli delete` | `delete_note` | 删除笔记（不可恢复，需确认） |
+| 管理 | `wpsnote-cli find` | `search_notes` | 全文搜索笔记 |
+| 管理 | `wpsnote-cli list` | `list_notes` | 列出笔记（支持 `order_by`、`starred`、`has_todo`、`cursor`） |
+| 管理 | `wpsnote-cli create` | `create_note` | 创建空白笔记（返回 `note_id`） |
+| 管理 | `wpsnote-cli info` | `get_note_info` | 获取单篇笔记元数据与标签 |
+| 管理 | `wpsnote-cli update-info` | `update_note_info` | 修改笔记标题或星标状态 |
+| 标签 | `wpsnote-cli tags` | `list_tags` | 分页获取全部标签 |
+| 标签 | `wpsnote-cli find-tags` | `find_tags` | 搜索或列出标签（含 `tag_id` 与 `path`） |
+| 标签 | `wpsnote-cli get-notes-by-tag` | `get_notes_by_tag` | 查看某个标签下的笔记 |
+| 标签 | `wpsnote-cli manage-tags` | `manage_note_tags` | 单篇或批量管理笔记文件级标签 |
+| 标签 | `wpsnote-cli add-note-tags` / `remove-note-tags` | `add_note_tags` / `remove_note_tags` | 向笔记增量追加/移除标签 |
+| 标签 | `wpsnote-cli rename-tag` / `delete-tag` | `rename_tag` / `delete_tag` | 全局重命名或删除标签（删除需 `--yes`） |
+| 导入 | `wpsnote-cli import-web` | `import_web_page` | 导入支持域名的网页内容 |
+| 回收站 | `wpsnote-cli trash-list` | `list_trash` | 查看回收站笔记 |
+| 回收站 | `wpsnote-cli trash` / `restore` | `trash_note` / `restore_note` | 移入回收站（`--yes`）/ 从回收站恢复 |
+| 回收站 | `wpsnote-cli purge` | `permanently_delete_note` | 永久删除回收站中的笔记（不可恢复，需 `--yes`） |
 
-# 社区与贡献
+---
 
-写了一段绝佳的 Skill，只留给自己用岂不是太可惜了。加入 WPS笔记 AI Skill 共创社区，让你的本地 Skill 直接跃入无数人的业务工作流。
+## 创建与贡献 Skill
+
+在 `skills/<your-skill-name>/SKILL.md` 下新建文件，保持结构聚焦于具体业务场景：
+
+```markdown
+---
+name: my-skill-name
+description: 一句话说明 Skill 的能力范围与触发条件
+---
+
+# Skill 名称
+
+> WPS 笔记接口、XML 与通用错误码规范见 [wpsnote](../wpsnote/SKILL.md)。
+
+[在此编写业务场景的工作流、输入输出格式与质量要求]
+```
+
+编写规范详见 [claude-skills-complete-guide.md](./claude-skills-complete-guide.md)。
 
 ### 贡献步骤
 
-1. **用 `skill-creator` 创作**：告诉 Agent 你想创建什么 Skill，它会调用 [skill-creator](./skills/skill-creator/SKILL.md) 帮你走完完整流程
-2. **在 SKILL.md 中注明作者**：
-   ```yaml
-   ---
-   name: your-skill-name
-   description: 一句话描述这个 Skill 做什么，以及何时触发它
-   author: 你的名字 <your-github-username>
-   version: 1.0.0
-   ---
-   ```
-3. **检查冲突**：确认触发描述不与已有 Skill 重叠，底层能力复用 `wps-note`
-4. **提交 PR**：在 `skills/` 目录下新建子文件夹，确保包含完整的 `SKILL.md`
-
-**方式二**：有想法但没时间写代码？直接开一个 [Issue](https://github.com/wpsnote/wpsnote-skills/issues) 抛出你的脑洞，或前往 [WPS 社区](https://bbs.wps.cn/topics/node/28) 交流反馈。
+1. **独立场景边界**：编写 `SKILL.md` 时明确 `name` 与带清晰触发边界的 `description`，避免与现有 Skill 重叠。
+2. **复用基础能力**：笔记读写、标签管理、XML 格式与错误处理均直接引用 [wpsnote](./skills/wpsnote/SKILL.md)（Python 批量脚本统一复用 [comm_script/wps_cli.py](./comm_script/wps_cli.py)），不在场景 Skill 中重复抄写接口细节。
+3. **更新索引并提交 PR**：同步更新 `.claude-plugin/marketplace.json` 与 `README.md` 中的 Skill 列表，或通过 [Issue](https://github.com/wpsnote/wpsnote-skills/issues) / [WPS 社区](https://bbs.wps.cn/topics/node/28) 交流反馈。
 
 [![加入 WPS 社区](https://img.shields.io/badge/WPS笔记-加入WPS社区-FF6B35?style=flat-square)](https://bbs.wps.cn/topics/node/28)
 

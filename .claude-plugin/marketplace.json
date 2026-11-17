@@ -9,17 +9,22 @@
   },
   "plugins": [
     {
-      "name": "base-skills",
-      "description": "WPS 笔记核心能力：基础读写、搜索、管理 + 智能美化、协作打磨、标签整理、Skill 创建",
+      "name": "core-skills",
+      "description": "WPS 笔记基础能力：通过云端 MCP（wpsnote）与云端 CLI（wpsnote-cli）进行读写、搜索、XML 编辑与标签管理",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/wps-note",
+        "./skills/wpsnote"
+      ]
+    },
+    {
+      "name": "note-ops-skills",
+      "description": "笔记整理与美化：智能排版美化、标签体系整理",
+      "source": "./",
+      "strict": false,
+      "skills": [
         "./skills/wpsnote-beautifier",
-        "./skills/note-copilot",
-        "./skills/tag-organize",
-        "./skills/tag-organize-cli",
-        "./skills/skill-creator"
+        "./skills/tag-organize"
       ]
     },
     {
@@ -30,58 +35,30 @@
       "skills": [
         "./skills/content-creator",
         "./skills/wechat-publisher",
-        "./skills/short-video-copywriter",
         "./skills/xiaohongshu-note-creator",
-        "./skills/image-gen",
         "./skills/content-digest",
         "./skills/news-to-note",
-        "./skills/wps-note-intelligent-search",
-        "./skills/literature-reader",
         "./skills/paper-researcher"
       ]
     },
     {
       "name": "capture-skills",
-      "description": "信息捕获与记录：音频转写、文档导入、网页导入、编码文档、日历联动",
+      "description": "信息捕获与记录：本地文档批量导入、网页无损导入",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/live-transcript-summary",
         "./skills/doc-importer",
-        "./skills/web-importer",
-        "./skills/coding-assistant",
-        "./skills/note-calendar"
-      ]
-    },
-    {
-      "name": "creative-skills",
-      "description": "灵感引擎与长篇创作：记忆检索、想法连接、洞见生成、AI 陪伴式小说写作",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/ie-engine",
-        "./skills/ie-retrieve-memory",
-        "./skills/ie-connect-dots",
-        "./skills/ie-generate-insight",
-        "./skills/ie-recall-memory",
-        "./skills/novel-writer",
-        "./skills/novel-writer-cli"
+        "./skills/web-importer"
       ]
     },
     {
       "name": "learning-skills",
-      "description": "学习场景：课堂笔记整理、复习重点提取、自测批改、知识卡片、错误检查、前置知识补缺、知识网络构建",
+      "description": "学习场景：课堂笔记整理、重点提炼与闪卡、误区与前置补缺、知识串联、互动自测批改",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/class-note-builder",
-        "./skills/lecture-focus-extractor",
-        "./skills/misconception-finder",
-        "./skills/note-review-coach",
-        "./skills/notes-to-flashcards",
-        "./skills/notes-to-lesson-plan",
-        "./skills/prerequisite-gap-finder",
-        "./skills/study-note-linker"
+        "./skills/study-assistant",
+        "./skills/note-review-coach"
       ]
     }
   ]
